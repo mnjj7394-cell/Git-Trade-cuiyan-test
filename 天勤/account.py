@@ -30,6 +30,7 @@ class MyAccount:
         self.position_profit: float = 0.0  # 持仓盈亏
         self.commission: float = 0.0    # 手续费
         self.risk_ratio: float = 0.0    # 风险度
+        self.pnl: float = 0.0  # 浮动盈亏
 
     def update_from_tqsdk(self, tqsdk_account) -> None:
         """
@@ -53,6 +54,7 @@ class MyAccount:
 
         # 3. 更新风险指标
         self.risk_ratio = tqsdk_account.risk_ratio
+        self.pnl = getattr(tqsdk_account, 'float_profit', 0.0)  # 根据天勤字段名调整
 
         # 注意：天勤的 currency, accountid 等字段通常在对象创建后不变，
         # 所以这里没有更新它们。如果会变，则需要添加相应更新逻辑。

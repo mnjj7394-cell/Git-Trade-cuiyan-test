@@ -1,0 +1,31 @@
+2025-11-02 18:49:39,571 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:49:41,775 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:49:43,837 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 18:49:43,840 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:49:46,455 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:49:48,537 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 18:49:48,539 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:49:51,238 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:49:53,319 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 18:49:53,322 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:49:56,256 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:49:58,411 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 18:49:58,414 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:50:04,753 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:50:06,772 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,773 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,776 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,776 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,777 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,777 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,777 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,778 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,779 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,779 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 18:50:06,863 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 18:50:06,868 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:50:09,431 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:50:11,481 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 18:50:11,483 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 18:50:14,045 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 18:50:16,256 - MyDataManager - INFO - 已断开天勤API连接
