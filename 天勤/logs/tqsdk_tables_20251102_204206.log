@@ -1,0 +1,40 @@
+2025-11-02 20:42:09,003 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:12,102 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:14,209 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:14,216 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:17,248 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:19,338 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:19,341 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:22,630 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:24,743 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:24,746 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:27,730 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:29,832 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:29,835 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:32,819 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:34,927 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:34,929 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:37,868 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:39,981 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:39,987 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:43,109 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:45,120 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,120 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,125 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,126 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,126 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,127 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,127 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,127 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,128 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,128 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 20:42:45,205 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:45,207 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:48,855 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:50,986 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:50,990 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:54,134 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:42:56,283 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 20:42:56,285 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 20:42:59,498 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 20:43:01,609 - MyDataManager - INFO - 已断开天勤API连接

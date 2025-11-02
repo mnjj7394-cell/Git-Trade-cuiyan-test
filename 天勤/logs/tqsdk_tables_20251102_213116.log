@@ -1,0 +1,58 @@
+2025-11-02 21:31:18,844 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:21,449 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:21,449 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:23,464 - MyDataManager - INFO - 已添加策略: DoubleMaStrategy
+2025-11-02 21:31:23,551 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:23,558 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:26,196 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:26,196 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:28,296 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:28,298 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:31,222 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:31,222 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:33,340 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:33,342 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:36,215 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:36,216 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:38,348 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:38,351 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:40,993 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:40,993 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:43,095 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:43,098 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:46,024 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:46,024 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:48,038 - MyDataManager - INFO - 已添加策略: DoubleMaStrategy
+2025-11-02 21:31:48,133 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:48,141 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:50,899 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:50,899 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:52,912 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,913 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,913 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,914 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,915 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,915 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,916 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,916 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,917 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:52,917 - MyDataManager - ERROR - 等待更新过程异常: type object 'datetime.time' has no attribute 'time'
+2025-11-02 21:31:53,154 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:53,158 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:31:56,088 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:31:56,088 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:31:58,103 - MyDataManager - INFO - 已添加策略: DoubleMaStrategy
+2025-11-02 21:31:58,194 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:31:58,199 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:32:01,203 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:32:01,203 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:32:03,313 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:32:03,315 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:32:06,232 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:32:06,233 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:32:08,332 - MyDataManager - INFO - 已断开天勤API连接
+2025-11-02 21:32:08,335 - MyDataManager - INFO - 开始连接天勤API...
+2025-11-02 21:32:11,400 - MyDataManager - INFO - 自定义数据表初始化完成
+2025-11-02 21:32:11,400 - MyDataManager - INFO - 天勤API连接成功，自定义数据表初始化完成
+2025-11-02 21:32:13,403 - MyDataManager - INFO - 已添加策略: DoubleMaStrategy
+2025-11-02 21:32:13,479 - MyDataManager - INFO - 已断开天勤API连接
