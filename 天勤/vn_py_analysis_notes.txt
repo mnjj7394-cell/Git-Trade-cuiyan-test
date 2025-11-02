@@ -1,0 +1,233 @@
+核心基类：BaseData
+@dataclass
+class BaseData:
+    gateway_name: str  # 数据来源的网关名称，用于标识数据由哪个接口产生
+    extra: dict | None = field(default=None, init=False)  # 扩展字段，用于存储未预定义的额外信息，初始化为None且不参与初始化
+gateway_name：这是最重要的溯源标识。例如，当同时连接CTP和港股通网关时，通过此字段可区分一笔委托是发自哪个交易接口。
+extra：提供了一个灵活的“口袋”，用于承载任何未在标准字段中定义的信息，增强了框架的扩展性。
+
+一.AccountData（账户资金数据）记录交易账户的资金情况。
+@dataclass
+class AccountData(BaseData):
+    accountid: str  # 账户编号
+
+    balance: float = 0  # 账户权益（总资金）
+    frozen: float = 0   # 冻结资金（如委托占用的保证金、手续费等）
+    # available 字段在 __post_init__ 中自动计算
+
+    def __post_init__(self) -> None:
+        self.available: float = self.balance - self.frozen  # [核心字段] 可用资金
+        self.vt_accountid: str = f"{self.gateway_name}.{self.accountid}"
+核心作用：AccountData是资金管理的核心。它决定了能否开新仓（可用资金需大于所需保证金），也是计算收益率和整体风险度的基础
+关键字段解读：available：这是最关键的字段，由计算得出。任何新的开仓委托都会检查可用资金是否充足。引擎和风控模块会实时监控这个数值。
+
+二.OrderData（委托订单数据）：用于跟踪一笔委托订单从发出到最终状态（完全成交、撤销等）的全生命周期。
+@dataclass
+class OrderData(BaseData):
+    symbol: str          # 合约代码，例如 'cu2408'
+    exchange: Exchange   # 交易所枚举，例如 Exchange.SHFE（上海期货交易所）
+    orderid: str         # 网关内部唯一的委托单编号
+
+    type: OrderType = OrderType.LIMIT       # 订单类型，    LIMIT = _("限价")  MARKET = _("市价")  STOP = "STOP"  FAK = "FAK"  FOK = "FOK"  RFQ = _("询价")  ETF = "ETF"
+    direction: Direction | None = None       # 交易方向：LONG = _("多")  SHORT = _("空")  NET = _("净")
+    offset: Offset = Offset.NONE             # 开平仓标志：    OPEN = _("开") CLOSE = _("平")  CLOSETODAY = _("平今")  CLOSEYESTERDAY = _("平昨")
+    price: float = 0                         # 委托价格，对于市价单此字段可能为0
+    volume: float = 0                         # 委托总数量
+    traded: float = 0                         # [关键字段] 该订单已成交的数量
+    status: Status = Status.SUBMITTING        # [关键字段] 订单状态，如 • SUBMITTING(提交中) • NOTTRADED(未成交) • PARTTRADED(部分成交) • ALLTRADED(全部成交) • CANCELLED(已撤销) • REJECTED(拒单)
+    datetime: Datetime | None = None         # 订单最后状态更新的时间
+    reference: str = ""                       # 参考信息，通常用于记录发起此订单的策略编号或自定义标识
+
+    def __post_init__(self) -> None:
+        # 生成虚拟合约代码和虚拟订单ID，用于全局唯一标识
+        self.vt_symbol: str = f"{self.symbol}.{self.exchange.value}"
+        self.vt_orderid: str = f"{self.gateway_name}.{self.orderid}"
+
+    def is_active(self) -> bool:
+        """检查订单是否仍处于活跃状态（可成交或可撤销）"""
+        return self.status in ACTIVE_STATUSES  # ACTIVE_STATUSES 通常包含 SUBMITTING, NOTTRADED, PARTTRADED
+
+    def create_cancel_request(self) -> "CancelRequest":
+        """根据该订单创建撤单请求对象"""
+        return CancelRequest(orderid=self.orderid, symbol=self.symbol, exchange=self.exchange)
+核心作用：OrderData是订单状态的权威记录。策略引擎通过监听其状态变化（如 on_order回调）来知悉订单是否被交易所接受、是否部分成交、是否完全成交等，从而决定下一步操作
+关键字段解读：
+traded与 volume：通过比较这两个值，可以轻松计算出订单的未成交数量（volume - traded），这对于风险控制和策略逻辑至关重要。
+status：其变化驱动着整个策略的流程。例如，当状态变为 ALLTRADED时，策略可能会触发新的开仓逻辑。
+offset：明确区分开仓和平仓，是资金和持仓计算的基础。
+方法应用：is_active()方法常用于在策略停止时，检查并撤销所有仍处于活跃状态的订单
+
+三.TradeData（成交数据）记录订单的每一次成交详情。一笔 OrderData可能对应多笔 TradeData（例如，大额委托被分笔成交）。
+@dataclass
+class TradeData(BaseData):
+    symbol: str
+    exchange: Exchange
+   【# Chinese
+    CFFEX = "CFFEX"         # China Financial Futures Exchange
+    SHFE = "SHFE"           # Shanghai Futures Exchange
+    CZCE = "CZCE"           # Zhengzhou Commodity Exchange
+    DCE = "DCE"             # Dalian Commodity Exchange
+    INE = "INE"             # Shanghai International Energy Exchange
+    GFEX = "GFEX"           # Guangzhou Futures Exchange
+    SSE = "SSE"             # Shanghai Stock Exchange
+    SZSE = "SZSE"           # Shenzhen Stock Exchange
+    BSE = "BSE"             # Beijing Stock Exchange
+    SHHK = "SHHK"           # Shanghai-HK Stock Connect
+    SZHK = "SZHK"           # Shenzhen-HK Stock Connect
+    SGE = "SGE"             # Shanghai Gold Exchange
+    WXE = "WXE"             # Wuxi Steel Exchange
+    CFETS = "CFETS"         # CFETS Bond Market Maker Trading System
+    XBOND = "XBOND"         # CFETS X-Bond Anonymous Trading System
+
+    # Global
+    SMART = "SMART"         # Smart Router for US stocks
+    NYSE = "NYSE"           # New York Stock Exchnage
+    NASDAQ = "NASDAQ"       # Nasdaq Exchange
+    ARCA = "ARCA"           # ARCA Exchange
+    EDGEA = "EDGEA"         # Direct Edge Exchange
+    ISLAND = "ISLAND"       # Nasdaq Island ECN
+    BATS = "BATS"           # Bats Global Markets
+    IEX = "IEX"             # The Investors Exchange
+    AMEX = "AMEX"           # American Stock Exchange
+    TSE = "TSE"             # Toronto Stock Exchange
+    NYMEX = "NYMEX"         # New York Mercantile Exchange
+    COMEX = "COMEX"         # COMEX of CME
+    GLOBEX = "GLOBEX"       # Globex of CME
+    IDEALPRO = "IDEALPRO"   # Forex ECN of Interactive Brokers
+    CME = "CME"             # Chicago Mercantile Exchange
+    ICE = "ICE"             # Intercontinental Exchange
+    SEHK = "SEHK"           # Stock Exchange of Hong Kong
+    HKFE = "HKFE"           # Hong Kong Futures Exchange
+    SGX = "SGX"             # Singapore Global Exchange
+    CBOT = "CBOT"           # Chicago Board of Trade
+    CBOE = "CBOE"           # Chicago Board Options Exchange
+    CFE = "CFE"             # CBOE Futures Exchange
+    DME = "DME"             # Dubai Mercantile Exchange
+    EUREX = "EUX"           # Eurex Exchange
+    APEX = "APEX"           # Asia Pacific Exchange
+    LME = "LME"             # London Metal Exchange
+    BMD = "BMD"             # Bursa Malaysia Derivatives
+    TOCOM = "TOCOM"         # Tokyo Commodity Exchange
+    EUNX = "EUNX"           # Euronext Exchange
+    KRX = "KRX"             # Korean Exchange
+    OTC = "OTC"             # OTC Product (Forex/CFD/Pink Sheet Equity)
+    IBKRATS = "IBKRATS"     # Paper Trading Exchange of IB
+
+    # Special Function
+    LOCAL = "LOCAL"         # For local generated data
+    GLOBAL = "GLOBAL"       # For those exchanges not supported yet】
+
+    orderid: str  # 关联的订单ID
+    tradeid: str  # 交易所生成的唯一成交编号
+
+    direction: Direction | None = None  # 成交方向
+    offset: Offset = Offset.NONE        # 成交的开平仓标志
+    price: float = 0                    # 成交价格
+    volume: float = 0                    # 成交数量
+    datetime: Datetime | None = None    # 成交发生的时间
+
+    def __post_init__(self) -> None:
+        self.vt_symbol: str = f"{self.symbol}.{self.exchange.value}"
+        self.vt_orderid: str = f"{self.gateway_name}.{self.orderid}"
+        self.vt_tradeid: str = f"{self.gateway_name}.{self.tradeid}"  # 全局唯一的成交ID
+核心作用：TradeData是资金变动和持仓变化的最终依据。它是确权的凭证，策略引擎的 on_trade回调函数在收到成交后，才会真正更新策略内部的虚拟持仓和计算盈亏
+关键字段解读：
+orderid与 tradeid：orderid用于关联到原始委托，tradeid是交易所反馈的唯一标识，用于去重和精确查询。
+price和 volume：是计算交易成本、成交均价和实际盈亏的核心数据。
+
+四.PositionData（持仓数据）表示在特定合约、特定方向上的持仓头寸。
+@dataclass
+class PositionData(BaseData):
+    symbol: str
+    exchange: Exchange
+    direction: Direction  # 持仓方向
+
+    volume: float = 0     # 总持仓数量
+    frozen: float = 0     # [关键字段] 冻结的持仓数量（例如，用于已委托平仓但尚未成交的部分）
+    price: float = 0       # 持仓均价
+    pnl: float = 0         # 持仓浮动盈亏
+    yd_volume: float = 0  # [关键字段] 昨日持仓数量（期货市场中用于区分平今和平昨）
+
+    def __post_init__(self) -> None:
+        self.vt_symbol: str = f"{self.symbol}.{self.exchange.value}"
+        self.vt_positionid: str = f"{self.gateway_name}.{self.vt_symbol}.{self.direction.value}"  # 全局唯一的持仓ID
+核心作用：PositionData是风险管理和策略决策的基石。策略根据持仓量决定是否开仓、加仓或减仓；风控模块根据总持仓和盈亏情况判断是否触发风险阈值
+关键字段解读：
+frozen：此字段非常重要。它保证了“可交易持仓”计算的正确性：可平仓量 = volume - frozen。如果没有正确管理冻结量，可能导致超平（平仓量超过实际可平量）的错误。
+yd_volume：在中国期货市场中，此字段至关重要。它决定了平仓时是否优先使用 Offset.CLOSETODAY（平今）还是 Offset.CLOSE（平昨），这直接影响手续费的计算。
+direction：vn.py 将多仓和空仓视为两个独立的 PositionData对象，这与一些将净持仓作为一个对象的系统不同，概念更清晰。
+
+
+整体流程
+假设我们初始状态：账户资金 100,000 RMB，无任何持仓。现在策略决定开仓买入 2 手（假设每手10吨）螺纹钢 RB2410，价格为 3500 元/吨。
+
+步骤 1: 策略下单 → 创建 OrderData
+策略发出一个 OrderRequest。网关收到后，会立即生成一个初始的 OrderData对象，并通过事件引擎推送出去。
+OrderData关键字段状态：
+volume（委托数量）: 2
+traded（已成交数量）: 0
+status（状态）: Status.SUBMITTED（已提交）
+price（委托价）: 3500
+冻结资金：
+这笔订单会立即在账户中冻结相应的资金（保证金+手续费）。这部分计算体现在 AccountData的更新上。
+冻结资金 = 委托数量 * 合约乘数 * 委托价格 * 保证金比例 + 预估手续费
+假设螺纹钢合约乘数为 10（吨/手），保证金比例为 12%，则：
+冻结资金 = 2 * 10 * 3500 * 0.12 = 8,400 RMB
+此时，AccountData变为：
+balance（余额）: 100,000 (不变)
+frozen（冻结资金）: 8,400
+available（可用资金）: 100,000 - 8,400 = 91,600 （系统自动计算）
+
+步骤 2: 交易所受理 → 更新 OrderData
+订单被交易所接受后，OrderData状态更新：
+status: Status.NOTTRADED（未成交）
+
+步骤 3: 订单成交 → 创建 TradeData， 更新 OrderData
+假设订单全部成交。网关会生成一条 TradeData，并更新 OrderData。
+TradeData内容：
+volume（成交数量）: 2
+price（成交价格）: 3500
+direction: Direction.LONG（开多仓）
+offset: Offset.OPEN（开仓）
+OrderData更新后：
+traded: 2
+status: Status.ALLTRADED（全部成交）
+frozen（冻结持仓）: 0 （因为已全部成交，冻结解除）
+
+步骤 4: 更新 PositionData（核心计算环节）
+系统根据 TradeData更新或创建 PositionData。这是持仓计算的核心。
+PositionData初始/更新状态：
+volume（总持仓量）: 0 + 2 = 2
+frozen（冻结持仓量）: 0 （因为已成交，冻结解除）
+price（持仓均价）: 此时持仓成本为 2 * 10 * 3500 = 70,000。持仓均价为 总成本 / (持仓量 * 乘数)，但通常系统直接记录成本或均价为 3500。简化理解，price更新为 3500。
+pnl（浮动盈亏）: 0 （因为最新价仍是 3500）
+持仓均价：
+持仓均价 = (原持仓成本 + 新开仓成本) / (总持仓量 * 合约乘数)
+如果原来是空仓，则开仓相当于增加持仓。
+
+步骤 5: 更新 AccountData
+成交后，资金账户发生实际变动。
+解除冻结：之前冻结的 8,400 RMB 被释放。frozen变为 0。
+扣除实际手续费和占用保证金：
+实际手续费可能略低于预估。
+实际占用保证金 = 2 * 10 * 3500 * 0.12 = 8,400 RMB。
+这 8,400 RMB 会从 available中扣除，但仍是 balance的一部分。
+AccountData更新后：
+balance: 100,000 - 实际手续费 （假设手续费为 50元，则余额为 99,950）
+frozen: 0
+available: balance- 占用保证金= 99,950 - 8,400 = 91,550
+
+步骤 6: 行情更新 → 更新 PositionData和 AccountData
+当最新行情价格变为 3550 时，系统会实时计算浮动盈亏。
+浮动盈亏：
+浮动盈亏 = (最新价 - 持仓均价) * 持仓量 * 合约乘数
+浮动盈亏 = (3550 - 3500) * 2 * 10 = 1,000 RMB
+此时：
+PositionData的 pnl字段更新为 1000。
+AccountData的 balance会变为 99,950 + 1000 = 100,950（浮动盈亏会实时体现在账户权益中）。available也会相应增加。
+
+
+
+
+
+
