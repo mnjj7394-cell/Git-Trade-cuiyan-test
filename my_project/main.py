@@ -1,22 +1,23 @@
 """
-修改后的主程序
-支持通过参数选择策略
+改进的主程序
+支持通过参数选择策略，集成数据适配和异步同步桥接
 """
-import asyncio
 import argparse
+import time
+from datetime import datetime
 from core.event_engine import EventEngine
 from core.data_manager import DataManager
 from core.backtest_engine import BacktestEngine
 from gateways.tqsdk_gateway import TqsdkGateway
-from config.settings import Settings  # 新增导入：从配置获取凭据
+from config.settings import Settings
 
 
 def main():
     """主函数"""
     # 解析命令行参数
     parser = argparse.ArgumentParser(description="量化交易回测系统")
-    parser.add_argument("--strategy", "-s", type=str, default="double_ma",  # 修改处：默认策略改为double_ma
-                       help="策略名称（如：double_ma, breakout, mean_reversion）")  # 修改处：更新帮助信息
+    parser.add_argument("--strategy", "-s", type=str, default="double_ma",
+                       help="策略名称（如：double_ma, breakout, mean_reversion）")
     parser.add_argument("--symbol", type=str, default="SHFE.cu2401",
                        help="交易品种")
     parser.add_argument("--start", type=str, default="2024-01-01",
@@ -26,12 +27,12 @@ def main():
 
     args = parser.parse_args()
 
-    # 运行回测
-    asyncio.run(run_backtest(args))
+    # 运行回测（同步版本）
+    run_backtest(args)
 
 
-async def run_backtest(args):
-    """运行回测"""
+def run_backtest(args):
+    """运行回测（同步版本）"""
     print("=" * 50)
     print("量化交易回测系统启动")
     print(f"策略: {args.strategy}")
@@ -42,24 +43,24 @@ async def run_backtest(args):
     try:
         # 初始化核心组件
         event_engine = EventEngine()
-        data_manager = DataManager(event_engine)  # 修复：传入event_engine参数
+        data_manager = DataManager(event_engine)
         backtest_engine = BacktestEngine(event_engine, data_manager)
 
         # 初始化网关
         gateway = TqsdkGateway(event_engine)
 
-        # 新增步骤：从配置获取凭据并连接天勤API
-        config = Settings()  # 创建配置实例
+        # 从配置获取凭据并连接天勤API（同步调用）
+        config = Settings()
         print("正在连接天勤API...")
-        if not await gateway.connect(config.tqsdk_username, config.tqsdk_password):
+        if not gateway.connect_sync(config.tqsdk_username, config.tqsdk_password):
             print("天勤API连接失败，请检查网络和凭据")
-            return  # 连接失败时直接返回
+            return
 
         print("天勤API连接成功")
 
-        # 获取历史数据
+        # 获取历史数据（同步调用）
         print("正在获取历史数据...")
-        history_data = await gateway.get_history_data(
+        history_data = gateway.get_history_data_sync(
             symbol=args.symbol,
             start_dt=args.start,
             end_dt=args.end,
@@ -73,13 +74,13 @@ async def run_backtest(args):
         # 设置历史数据
         backtest_engine.set_history_data(history_data)
 
-        # 配置策略参数 - 根据策略名称动态配置
-        strategy_config = _get_strategy_config(args.strategy, args.symbol)  # 修改处：移除self.前缀，直接调用函数
+        # 配置策略参数
+        strategy_config = _get_strategy_config(args.strategy, args.symbol)
 
         # 运行回测
         print("开始回测...")
         backtest_engine.run_backtest(
-            strategy_name=args.strategy,  # 修改处：使用命令行参数而不是硬编码
+            strategy_name=args.strategy,
             strategy_config=strategy_config
         )
 
@@ -89,9 +90,9 @@ async def run_backtest(args):
     except Exception as e:
         print(f"回测过程发生异常: {e}")
     finally:
-        # 清理资源
+        # 清理资源（同步调用）
         if 'gateway' in locals():
-            await gateway.disconnect()
+            gateway.disconnect_sync()
         print("回测系统关闭")
 
 
