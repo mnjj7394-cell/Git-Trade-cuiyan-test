@@ -1,0 +1,163 @@
+2025-11-04 14:04:05,993 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 14:04:05,994 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 14:04:05,995 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 14:04:06,009 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 14:04:06,009 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 14:04:08,222 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 14:04:08,623 - TqsdkGateway - ERROR - 天勤API连接失败: 用户权限认证失败 (422,{'errors': [{'code': 'pattern', 'description': "Does not match pattern '^[0-9a-zA-Z!#$%&amp;&#39;\\(\\)*+,-.:;&lt;=&gt;?@\\[\\]^_`\\{\\\\|\\}~]+$'", 'field': 'password', 'resource': '/auth/realms/shinnytech/protocol/openid-connect/token'}], 'message': 'Validation Failed'})
+2025-11-04 14:04:08,626 - QuantSystem - ERROR - 网关连接失败
+2025-11-04 14:04:08,626 - QuantSystem - INFO - 网关连接完成
+2025-11-04 14:04:08,627 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 14:04:08,627 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 14:04:08,627 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 2.63秒
+2025-11-04 14:04:08,627 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 14:04:08,627 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:04:08,627 - TqsdkGateway - ERROR - 未连接天勤API
+2025-11-04 14:04:08,627 - QuantSystem - ERROR - 历史数据获取失败
+2025-11-04 14:04:08,627 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 14:04:08,654 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_140408.json
+2025-11-04 14:04:08,654 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-04 14:04:08,705 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-2' coro=<TqBaseApi._windows_patch() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\baseApi.py:143> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:04:08,706 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-3' coro=<TqApi._notify_watcher() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\api.py:3781> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:02,456 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 14:30:02,456 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 14:30:02,457 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 14:30:02,462 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 14:30:02,462 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 14:30:04,680 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 14:30:47,712 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 43.03秒
+2025-11-04 14:30:47,712 - QuantSystem - INFO - 网关连接成功
+2025-11-04 14:30:47,712 - QuantSystem - INFO - 网关连接完成
+2025-11-04 14:30:47,713 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 14:30:47,713 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 14:30:47,714 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 45.26秒
+2025-11-04 14:30:47,714 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 14:30:47,714 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:30:47,714 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:30:47,714 - TqsdkGateway - INFO - 使用频率: 60秒 (1min)
+2025-11-04 14:30:48,015 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.30秒
+2025-11-04 14:30:48,016 - QuantSystem - INFO - 开始执行回测...
+2025-11-04 14:30:48,016 - QuantSystem - ERROR - 回测执行失败: 'BacktestEngine' object has no attribute 'write_log'
+2025-11-04 14:30:48,016 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 14:30:48,016 - QuantSystem - ERROR - 系统停止过程中发生错误: 'BacktestEngine' object has no attribute 'write_log'
+2025-11-04 14:30:48,017 - TqsdkGateway - INFO - 触发数据同步检查...
+2025-11-04 14:30:50,133 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-2' coro=<TqBaseApi._windows_patch() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\baseApi.py:146> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,134 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-3' coro=<TqApi._notify_watcher() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\api.py:3786> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-4' coro=<TqConnect._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\connect.py:181> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<TqReconnect._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\connect.py:261> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-6' coro=<TqSymbols._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\symbols.py:29> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-7' coro=<TqTradingStatus._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\trading_status.py:43> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-8' coro=<BaseSim._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\tradeable\sim\basesim.py:79> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-9' coro=<TqWebHelper._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\tqwebhelper.py:80> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,140 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-10' coro=<DataExtension._run() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\data_extension.py:85> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:30:50,147 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-21' coro=<TqConnect._send_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\connect.py:230> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,150 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-11' coro=<TqReconnect._send_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\connect.py:314> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,151 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-12' coro=<TqSymbols._sim_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\symbols.py:71> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,153 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-15' coro=<TqModule._up_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\baseModule.py:50> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,153 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-14' coro=<TqModule._up_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\baseModule.py:50> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,155 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-16' coro=<TqModule._up_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\baseModule.py:50> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,157 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-17' coro=<TqWebHelper._data_handler_without_web() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\tqwebhelper.py:165> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,159 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-18' coro=<DataExtension._md_handler() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\data_extension.py:107> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,253 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-13' coro=<TqTradingStatus._symbol_info_watcher() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\trading_status.py:95> wait_for=<Future cancelled>>
+2025-11-04 14:30:50,519 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-20' coro=<Connection.keepalive() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\websockets\asyncio\connection.py:815> wait_for=<Future pending cb=[Task.task_wakeup()]>>
+2025-11-04 14:30:50,610 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-23' coro=<TqDataFrame.async_update() running at D:\Anaconda\envs\myEnvironment\lib\site-packages\tqsdk\objs_not_entity.py:181> wait_for=<Future finished result=None> cb=[TqBaseApi._on_task_done()]>
+2025-11-04 14:37:21,926 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 14:37:21,926 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 14:37:21,927 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 14:37:21,931 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 14:37:21,931 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 14:37:23,695 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 14:38:08,672 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 44.98秒
+2025-11-04 14:38:08,672 - QuantSystem - INFO - 网关连接成功
+2025-11-04 14:38:08,672 - QuantSystem - INFO - 网关连接完成
+2025-11-04 14:38:08,674 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 14:38:08,674 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 14:38:08,674 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 46.75秒
+2025-11-04 14:38:08,674 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 14:38:08,674 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:38:08,674 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:38:08,674 - TqsdkGateway - INFO - 使用频率: 60秒 (1min)
+2025-11-04 14:38:08,743 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.07秒
+2025-11-04 14:38:08,744 - QuantSystem - INFO - 开始执行回测...
+2025-11-04 14:38:08,749 - QuantSystem - ERROR - 回测执行失败: object NoneType can't be used in 'await' expression
+2025-11-04 14:38:08,749 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 14:38:08,749 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-04 14:38:08,749 - TqsdkGateway - WARNING - 最终数据同步失败: 'summary'
+2025-11-04 14:38:08,848 - TqsdkGateway - WARNING - 断开连接时发生警告: object NoneType can't be used in 'await' expression
+2025-11-04 14:38:13,903 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_143813.json
+2025-11-04 14:38:13,904 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-04 14:38:13,904 - TqsdkGateway - INFO - 触发数据同步检查...
+2025-11-04 14:50:33,614 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 14:50:33,614 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 14:50:33,615 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 14:50:33,624 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 14:50:33,624 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 14:50:35,049 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 14:51:19,789 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 44.74秒
+2025-11-04 14:51:19,790 - QuantSystem - INFO - 网关连接成功
+2025-11-04 14:51:19,790 - QuantSystem - INFO - 网关连接完成
+2025-11-04 14:51:19,790 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 14:51:19,792 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 14:51:19,792 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 46.18秒
+2025-11-04 14:51:19,792 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 14:51:19,792 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:51:19,792 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:51:19,792 - TqsdkGateway - INFO - 使用频率: 60秒 (1min)
+2025-11-04 14:51:20,087 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.29秒
+2025-11-04 14:51:20,087 - QuantSystem - INFO - 开始执行回测...
+2025-11-04 14:51:20,101 - QuantSystem - ERROR - 回测执行失败: object NoneType can't be used in 'await' expression
+2025-11-04 14:51:20,101 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 14:51:20,102 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-04 14:51:20,102 - TqsdkGateway - WARNING - 最终数据同步失败: 'summary'
+2025-11-04 14:51:20,208 - TqsdkGateway - WARNING - 断开连接时发生警告: object NoneType can't be used in 'await' expression
+2025-11-04 14:51:25,257 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_145125.json
+2025-11-04 14:51:25,259 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-04 14:51:25,259 - TqsdkGateway - INFO - 触发数据同步检查...
+2025-11-04 14:58:04,953 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 14:58:04,954 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 14:58:04,954 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 14:58:04,958 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 14:58:04,958 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 14:58:06,469 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 14:58:47,768 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 41.30秒
+2025-11-04 14:58:47,768 - QuantSystem - INFO - 网关连接成功
+2025-11-04 14:58:47,768 - QuantSystem - INFO - 网关连接完成
+2025-11-04 14:58:47,769 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 14:58:47,769 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 14:58:47,769 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 42.82秒
+2025-11-04 14:58:47,769 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 14:58:47,769 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:58:47,769 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 14:58:47,769 - TqsdkGateway - INFO - 使用频率: 60秒 (1min)
+2025-11-04 14:58:47,844 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.07秒
+2025-11-04 14:58:47,844 - QuantSystem - INFO - 开始执行回测...
+2025-11-04 14:58:47,859 - QuantSystem - ERROR - 回测执行失败: object NoneType can't be used in 'await' expression
+2025-11-04 14:58:47,859 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 14:58:47,860 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-04 14:58:47,860 - TqsdkGateway - WARNING - 最终数据同步失败: 'summary'
+2025-11-04 14:58:47,956 - TqsdkGateway - WARNING - 断开连接时发生警告: object NoneType can't be used in 'await' expression
+2025-11-04 14:58:53,012 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_145853.json
+2025-11-04 14:58:53,013 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-04 14:58:53,013 - TqsdkGateway - INFO - 触发数据同步检查...

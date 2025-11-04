@@ -1,0 +1,252 @@
+{
+  "system_info": {
+    "start_time": "2025-11-04T14:04:05.994838",
+    "end_time": "2025-11-04T14:04:08.652540",
+    "uptime_seconds": 2.657702,
+    "version": "1.0.0"
+  },
+  "configuration": {
+    "tqsdk": {
+      "username": "快期账户",
+      "password": "快期密码",
+      "server": "wss://free-openmd.shinnytech.com/t/md/front/mobile",
+      "timeout": 30,
+      "reconnect_interval": 5,
+      "max_reconnect_attempts": 10
+    },
+    "accounting": {
+      "initial_balance": 1000000.0,
+      "commission_rate": 0.0001,
+      "margin_rate": 0.1,
+      "slippage_rate": 0.0001,
+      "risk_free_rate": 0.03,
+      "tax_rate": 0.001,
+      "min_commission": 5.0
+    },
+    "order": {
+      "max_open_orders": 100,
+      "order_timeout": 300,
+      "auto_cancel_pending": true,
+      "partial_fill_allowed": true,
+      "max_order_volume": 100,
+      "price_tick": 1.0
+    },
+    "risk": {
+      "max_position_ratio": 0.3,
+      "max_drawdown_limit": 0.1,
+      "stop_loss_rate": 0.05,
+      "take_profit_rate": 0.1,
+      "daily_loss_limit": 0.05,
+      "var_limit": 0.02,
+      "margin_alert_level": 0.8
+    },
+    "performance": {
+      "max_workers": 10,
+      "thread_pool_size": 20,
+      "event_queue_size": 1000,
+      "data_buffer_size": 10000,
+      "log_buffer_size": 1000,
+      "cache_ttl": 300,
+      "gc_interval": 60,
+      "profiling_enabled": false
+    },
+    "backtest": {
+      "initial_capital": 1000000.0,
+      "commission_rate": 0.0001,
+      "slippage": 0.0001,
+      "frequency": "1min",
+      "start_date": "2024-01-01",
+      "end_date": "2024-01-05",
+      "benchmark": "SHFE.cu2401",
+      "warmup_period": 50,
+      "output_dir": "./backtest_results"
+    },
+    "monitoring": {
+      "log_level": "INFO",
+      "log_file": "quant_system.log",
+      "metrics_port": 9090,
+      "health_check_interval": 30,
+      "performance_metrics_interval": 60,
+      "alert_webhook": "",
+      "data_retention_days": 30,
+      "backup_interval": 3600,
+      "enable_telemetry": true
+    },
+    "data_source": {
+      "primary_source": "tqsdk",
+      "fallback_source": "file",
+      "local_data_path": "./data",
+      "real_time_enabled": true,
+      "historical_data_days": 365,
+      "data_quality_check": true,
+      "auto_update_symbols": true
+    },
+    "strategy": {
+      "default_strategy": "double_ma",
+      "max_concurrent_strategies": 5,
+      "strategy_restart_interval": 86400,
+      "performance_review_interval": 3600,
+      "auto_stop_loss": true,
+      "risk_adjustment": true
+    },
+    "version": "1.0.0",
+    "config_file": null,
+    "timestamp": "2025-11-04T14:04:08.652540"
+  },
+  "performance_metrics": {
+    "system_uptime_seconds": {
+      "name": "system_uptime_seconds",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "系统运行时间",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "system_cpu_usage_percent": {
+      "name": "system_cpu_usage_percent",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "系统CPU使用率",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "system_memory_usage_mb": {
+      "name": "system_memory_usage_mb",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "系统内存使用量(MB)",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "system_disk_usage_percent": {
+      "name": "system_disk_usage_percent",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "系统磁盘使用率",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "total_requests": {
+      "name": "total_requests",
+      "type": "counter",
+      "value": 0.0,
+      "description": "总请求数",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "total_errors": {
+      "name": "total_errors",
+      "type": "counter",
+      "value": 0.0,
+      "description": "总错误数",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "active_connections": {
+      "name": "active_connections",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "活跃连接数",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "request_duration_seconds": {
+      "name": "request_duration_seconds",
+      "type": "histogram",
+      "value": 0.0,
+      "description": "请求处理时间",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "total_trades": {
+      "name": "total_trades",
+      "type": "counter",
+      "value": 0.0,
+      "description": "总交易次数",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "current_positions": {
+      "name": "current_positions",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "当前持仓数",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "account_balance": {
+      "name": "account_balance",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "账户余额",
+      "timestamp": "2025-11-04 14:04:05.993840",
+      "history_size": 0,
+      "labels": {}
+    },
+    "system_memory_usage": {
+      "name": "system_memory_usage",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "系统内存使用率",
+      "timestamp": "2025-11-04 14:04:08.627233",
+      "history_size": 0,
+      "labels": {}
+    },
+    "system_cpu_usage": {
+      "name": "system_cpu_usage",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "系统CPU使用率",
+      "timestamp": "2025-11-04 14:04:08.627233",
+      "history_size": 0,
+      "labels": {}
+    },
+    "floating_pnl": {
+      "name": "floating_pnl",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "浮动盈亏",
+      "timestamp": "2025-11-04 14:04:08.627233",
+      "history_size": 0,
+      "labels": {}
+    },
+    "event_queue_size": {
+      "name": "event_queue_size",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "事件队列大小",
+      "timestamp": "2025-11-04 14:04:08.627233",
+      "history_size": 0,
+      "labels": {}
+    },
+    "active_threads": {
+      "name": "active_threads",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "活跃线程数",
+      "timestamp": "2025-11-04 14:04:08.627233",
+      "history_size": 0,
+      "labels": {}
+    },
+    "order_processing_time": {
+      "name": "order_processing_time",
+      "type": "histogram",
+      "value": 0.0,
+      "description": "订单处理时间",
+      "timestamp": "2025-11-04 14:04:08.627233",
+      "history_size": 0,
+      "labels": {}
+    }
+  },
+  "final_status": "stopped"
+}
