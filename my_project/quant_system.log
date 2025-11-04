@@ -161,3 +161,82 @@ task: <Task pending name='Task-23' coro=<TqDataFrame.async_update() running at D
 2025-11-04 14:58:53,012 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_145853.json
 2025-11-04 14:58:53,013 - QuantSystem - INFO - 量化交易系统已停止
 2025-11-04 14:58:53,013 - TqsdkGateway - INFO - 触发数据同步检查...
+2025-11-04 15:33:38,330 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 15:33:38,332 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 15:33:38,333 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 15:33:38,336 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 15:33:38,336 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 15:33:39,795 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 15:34:24,688 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 44.89秒
+2025-11-04 15:34:24,688 - QuantSystem - INFO - 网关连接成功
+2025-11-04 15:34:24,688 - QuantSystem - INFO - 网关连接完成
+2025-11-04 15:34:24,689 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 15:34:24,689 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 15:34:24,690 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 46.36秒
+2025-11-04 15:34:24,690 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 15:34:24,690 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 15:34:24,690 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 15:34:24,690 - TqsdkGateway - INFO - 使用频率: 60秒 (1min)
+2025-11-04 15:34:24,762 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.07秒
+2025-11-04 15:34:24,762 - QuantSystem - INFO - 开始执行回测...
+2025-11-04 15:34:24,776 - QuantSystem - ERROR - 回测执行失败: object NoneType can't be used in 'await' expression
+2025-11-04 15:34:24,776 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 15:34:24,777 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-04 15:34:24,777 - TqsdkGateway - WARNING - 最终数据同步失败: 'summary'
+2025-11-04 15:34:24,869 - TqsdkGateway - WARNING - 断开连接时发生警告: object NoneType can't be used in 'await' expression
+2025-11-04 15:34:29,920 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_153429.json
+2025-11-04 15:34:29,920 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-04 15:34:29,921 - TqsdkGateway - INFO - 触发数据同步检查...
+2025-11-04 15:45:38,016 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 15:45:38,016 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 15:45:38,017 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 15:45:38,021 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 15:45:38,021 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 15:45:39,419 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 15:46:23,936 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 44.52秒
+2025-11-04 15:46:23,937 - QuantSystem - INFO - 网关连接成功
+2025-11-04 15:46:23,937 - QuantSystem - INFO - 网关连接完成
+2025-11-04 15:46:23,938 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 15:46:23,938 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 15:46:23,938 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 45.92秒
+2025-11-04 15:46:23,938 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 15:46:23,938 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 15:46:23,939 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 15:46:23,939 - TqsdkGateway - INFO - 使用频率: 1min秒
+2025-11-04 15:46:23,940 - TqsdkGateway - ERROR - 获取历史数据失败: invalid literal for int() with base 10: '1min'
+2025-11-04 15:46:23,940 - QuantSystem - ERROR - 历史数据获取失败
+2025-11-04 15:46:23,940 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 15:46:23,940 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-04 15:46:23,941 - TqsdkGateway - INFO - 执行最终数据同步...
+2025-11-04 15:46:24,041 - TqsdkGateway - INFO - 最终数据同步完成
+2025-11-04 15:46:24,138 - TqsdkGateway - WARNING - 断开连接时发生警告: a coroutine was expected, got None
+2025-11-04 15:46:24,138 - TqsdkGateway - INFO - 天勤API连接已断开
+2025-11-04 15:46:29,188 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_154629.json
+2025-11-04 15:46:29,188 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-04 15:55:01,270 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-04 15:55:01,271 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-04 15:55:01,272 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-04 15:55:01,276 - QuantSystem - INFO - 数据表初始化完成
+2025-11-04 15:55:01,276 - QuantSystem - INFO - 数据管理器初始化完成
+2025-11-04 15:55:02,727 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-04 15:55:50,186 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 47.46秒
+2025-11-04 15:55:50,186 - QuantSystem - INFO - 网关连接成功
+2025-11-04 15:55:50,186 - QuantSystem - INFO - 网关连接完成
+2025-11-04 15:55:50,187 - QuantSystem - INFO - 监控服务启动完成
+2025-11-04 15:55:50,187 - QuantSystem - INFO - 监控指标注册完成
+2025-11-04 15:55:50,187 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 48.92秒
+2025-11-04 15:55:50,188 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-04 15:55:50,188 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 15:55:50,188 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-04 15:55:50,188 - TqsdkGateway - INFO - 原始频率: 1min, 解析后: 60秒
+2025-11-04 15:55:50,260 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.07秒
+2025-11-04 15:55:50,260 - QuantSystem - INFO - 开始执行回测...
+2025-11-04 15:55:50,272 - QuantSystem - ERROR - 回测执行失败: object NoneType can't be used in 'await' expression
+2025-11-04 15:55:50,272 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-04 15:55:50,272 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-04 15:55:50,272 - TqsdkGateway - INFO - 执行最终数据同步...
+2025-11-04 15:55:50,376 - TqsdkGateway - INFO - 最终数据同步完成
+2025-11-04 15:55:50,512 - TqsdkGateway - WARNING - 断开连接时发生警告: a coroutine was expected, got None
+2025-11-04 15:55:50,512 - TqsdkGateway - INFO - 天勤API连接已断开
+2025-11-04 15:55:55,552 - QuantSystem - INFO - 系统报告已保存: system_report_20251104_155555.json
+2025-11-04 15:55:55,553 - QuantSystem - INFO - 量化交易系统已停止
