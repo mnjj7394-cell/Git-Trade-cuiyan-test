@@ -728,3 +728,67 @@ task: <Task pending name='Task-3' coro=<TqBaseApi._windows_patch() running at D:
 2025-11-06 22:06:13,622 - TqsdkGateway - INFO - 天勤API连接已断开
 2025-11-06 22:06:18,704 - QuantSystem - INFO - 系统报告已保存: system_report_20251106_220618.json
 2025-11-06 22:06:18,704 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-06 22:22:32,061 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-06 22:22:32,061 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-06 22:22:32,063 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-06 22:22:32,174 - QuantSystem - INFO - 数据管理器状态: {'timestamp': datetime.datetime(2025, 11, 6, 22, 22, 32, 174934), 'tables_initialized': True, 'total_tables': 4, 'initialized_tables': 4, 'table_details': {'account': {'table_name': 'account', 'initialized': True, 'account_count': 1, 'config': {'table_name': 'account', 'type': 'account', 'persistent': True, 'validation_rules': {'required_fields': ['account_id', 'balance', 'available']}}}, 'order': {'table_name': 'order', 'initialized': True, 'order_count': 0, 'config': {'table_name': 'order', 'type': 'order', 'persistent': True, 'validation_rules': {'required_fields': ['order_id', 'symbol', 'direction', 'volume']}}}, 'position': {'table_name': 'position', 'initialized': True, 'position_count': 0, 'config': {'table_name': 'position', 'type': 'position', 'persistent': True, 'validation_rules': {'required_fields': ['strategy', 'symbol', 'direction', 'volume']}}}, 'trade': {'table_name': 'trade', 'initialized': True, 'trade_count': 0, 'config': {'table_name': 'trade', 'type': 'trade', 'persistent': True, 'validation_rules': {'required_fields': ['trade_id', 'symbol', 'direction', 'volume']}}}}}
+2025-11-06 22:22:35,269 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-06 22:23:22,196 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 46.93秒
+2025-11-06 22:23:22,197 - QuantSystem - INFO - 网关连接成功
+2025-11-06 22:23:22,197 - QuantSystem - INFO - 网关连接完成
+2025-11-06 22:23:22,198 - QuantSystem - INFO - 监控服务启动完成
+2025-11-06 22:23:22,198 - QuantSystem - INFO - 监控指标注册完成
+2025-11-06 22:23:22,198 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 50.14秒
+2025-11-06 22:23:22,198 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-06 22:23:22,199 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-06 22:23:22,199 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-06 22:23:22,199 - TqsdkGateway - INFO - 原始频率: 1min, 解析后: 60秒
+2025-11-06 22:23:22,701 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.50秒
+2025-11-06 22:23:22,701 - QuantSystem - INFO - 开始执行回测...
+2025-11-06 22:23:22,702 - DataTable.account - WARNING - 自动生成account_id: account_20251106_222322
+2025-11-06 22:23:22,710 - DataTable.trade - INFO - 通过add_trade方法添加成交记录
+2025-11-06 22:23:22,710 - DataTable.position - ERROR - direction参数类型错误: 期望str, 实际<class 'float'>
+2025-11-06 22:23:22,721 - DataTable.trade - INFO - 通过add_trade方法添加成交记录
+2025-11-06 22:23:22,721 - DataTable.position - ERROR - direction参数类型错误: 期望str, 实际<class 'float'>
+2025-11-06 22:23:22,722 - QuantSystem - INFO - 回测完成，耗时: 0.02秒
+2025-11-06 22:23:22,723 - QuantSystem - INFO - 回测结果已保存: ./backtest_results\backtest_double_ma_20251106_222322.json
+2025-11-06 22:23:22,724 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-06 22:23:22,724 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-06 22:23:22,724 - TqsdkGateway - INFO - 执行最终数据同步...
+2025-11-06 22:23:22,724 - QuantSystem - INFO - 回测监控任务已停止
+2025-11-06 22:23:22,828 - TqsdkGateway - INFO - 最终数据同步完成
+2025-11-06 22:23:22,970 - TqsdkGateway - WARNING - 断开连接时发生警告: a coroutine was expected, got None
+2025-11-06 22:23:22,970 - TqsdkGateway - INFO - 天勤API连接已断开
+2025-11-06 22:23:28,077 - QuantSystem - INFO - 系统报告已保存: system_report_20251106_222328.json
+2025-11-06 22:23:28,078 - QuantSystem - INFO - 量化交易系统已停止
+2025-11-06 22:32:53,102 - QuantSystem - INFO - 日志系统初始化完成
+2025-11-06 22:32:53,102 - QuantSystem - INFO - 开始初始化量化交易系统...
+2025-11-06 22:32:53,103 - QuantSystem - INFO - 事件引擎启动完成
+2025-11-06 22:32:53,210 - QuantSystem - INFO - 数据管理器状态: {'timestamp': datetime.datetime(2025, 11, 6, 22, 32, 53, 210745), 'tables_initialized': True, 'total_tables': 4, 'initialized_tables': 4, 'table_details': {'account': {'table_name': 'account', 'initialized': True, 'account_count': 1, 'config': {'table_name': 'account', 'type': 'account', 'persistent': True, 'validation_rules': {'required_fields': ['account_id', 'balance', 'available']}}}, 'order': {'table_name': 'order', 'initialized': True, 'order_count': 0, 'config': {'table_name': 'order', 'type': 'order', 'persistent': True, 'validation_rules': {'required_fields': ['order_id', 'symbol', 'direction', 'volume']}}}, 'position': {'table_name': 'position', 'initialized': True, 'position_count': 0, 'config': {'table_name': 'position', 'type': 'position', 'persistent': True, 'validation_rules': {'required_fields': ['strategy', 'symbol', 'direction', 'volume']}}}, 'trade': {'table_name': 'trade', 'initialized': True, 'trade_count': 0, 'config': {'table_name': 'trade', 'type': 'trade', 'persistent': True, 'validation_rules': {'required_fields': ['trade_id', 'symbol', 'direction', 'volume']}}}}}
+2025-11-06 22:32:55,203 - TqsdkGateway - INFO - 正在连接天勤API...
+2025-11-06 22:33:42,271 - TqsdkGateway - INFO - 天勤API连接成功，耗时: 47.07秒
+2025-11-06 22:33:42,271 - QuantSystem - INFO - 网关连接成功
+2025-11-06 22:33:42,271 - QuantSystem - INFO - 网关连接完成
+2025-11-06 22:33:42,272 - QuantSystem - INFO - 监控服务启动完成
+2025-11-06 22:33:42,272 - QuantSystem - INFO - 监控指标注册完成
+2025-11-06 22:33:42,272 - QuantSystem - INFO - 量化交易系统初始化完成，耗时: 49.17秒
+2025-11-06 22:33:42,272 - QuantSystem - INFO - 开始回测策略: double_ma
+2025-11-06 22:33:42,273 - QuantSystem - INFO - 获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-06 22:33:42,273 - TqsdkGateway - INFO - 开始获取历史数据: SHFE.cu2401 2024-01-01 到 2024-01-05
+2025-11-06 22:33:42,273 - TqsdkGateway - INFO - 原始频率: 1min, 解析后: 60秒
+2025-11-06 22:33:42,462 - TqsdkGateway - INFO - 成功获取 200 条历史数据，耗时: 0.19秒
+2025-11-06 22:33:42,462 - QuantSystem - INFO - 开始执行回测...
+2025-11-06 22:33:42,462 - DataTable.account - WARNING - 自动生成account_id: account_20251106_223342
+2025-11-06 22:33:42,469 - DataTable.trade - INFO - 通过add_trade方法添加成交记录
+2025-11-06 22:33:42,478 - DataTable.trade - INFO - 通过add_trade方法添加成交记录
+2025-11-06 22:33:42,479 - QuantSystem - INFO - 回测完成，耗时: 0.02秒
+2025-11-06 22:33:42,480 - QuantSystem - INFO - 回测结果已保存: ./backtest_results\backtest_double_ma_20251106_223342.json
+2025-11-06 22:33:42,480 - QuantSystem - INFO - 开始停止量化交易系统...
+2025-11-06 22:33:42,481 - TqsdkGateway - INFO - 执行断开连接前的最终数据同步...
+2025-11-06 22:33:42,481 - TqsdkGateway - INFO - 执行最终数据同步...
+2025-11-06 22:33:42,481 - QuantSystem - INFO - 回测监控任务已停止
+2025-11-06 22:33:42,587 - TqsdkGateway - INFO - 最终数据同步完成
+2025-11-06 22:33:42,711 - TqsdkGateway - WARNING - 断开连接时发生警告: a coroutine was expected, got None
+2025-11-06 22:33:42,711 - TqsdkGateway - INFO - 天勤API连接已断开
+2025-11-06 22:33:47,733 - QuantSystem - INFO - 系统报告已保存: system_report_20251106_223347.json
+2025-11-06 22:33:47,734 - QuantSystem - INFO - 量化交易系统已停止

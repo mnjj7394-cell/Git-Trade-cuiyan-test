@@ -1,6 +1,7 @@
 """
 持仓表统一接口实现
 遵循IDataTable接口规范
+修复版本：增强参数验证和错误处理
 """
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -12,7 +13,7 @@ import logging
 
 
 class PositionTable(IDataTable):
-    """持仓表（统一接口实现）"""
+    """持仓表（修复参数验证问题）"""
 
     def initialize(self, adapter: DataAdapter = None, sync_service: DataSyncService = None,
                   event_engine: EventEngine = None, **kwargs) -> bool:
@@ -48,7 +49,7 @@ class PositionTable(IDataTable):
         }
 
     def validate_data(self, data: Dict[str, Any]) -> bool:
-        """数据验证"""
+        """数据验证（增强验证逻辑）"""
         try:
             required_fields = self.table_config.get('validation_rules', {}).get('required_fields', [])
             for field in required_fields:
@@ -65,10 +66,23 @@ class PositionTable(IDataTable):
                 self.logger.error("price必须是数值类型")
                 return False
 
-            # 验证交易方向
+            # 验证交易方向（增强验证）
             valid_directions = ['BUY', 'SELL', 'SHORT', 'COVER', '']
-            if 'direction' in data and data['direction'] not in valid_directions:
-                self.logger.error(f"无效的交易方向: {data['direction']}")
+            if 'direction' in data:
+                if not isinstance(data['direction'], str):
+                    self.logger.error(f"direction必须是字符串类型，实际类型: {type(data['direction'])}")
+                    return False
+                if data['direction'] not in valid_directions:
+                    self.logger.error(f"无效的交易方向: {data['direction']}，有效值: {valid_directions}")
+                    return False
+
+            # 验证策略名称和标的符号
+            if 'strategy' in data and not isinstance(data['strategy'], str):
+                self.logger.error("strategy必须是字符串类型")
+                return False
+
+            if 'symbol' in data and not isinstance(data['symbol'], str):
+                self.logger.error("symbol必须是字符串类型")
                 return False
 
             return True
@@ -78,9 +92,10 @@ class PositionTable(IDataTable):
             return False
 
     def save_data(self, data: Dict[str, Any]) -> bool:
-        """保存数据"""
+        """保存数据（增强错误处理）"""
         try:
             if not self.validate_data(data):
+                self.logger.error("数据验证失败，无法保存")
                 return False
 
             # 使用适配器转换数据
@@ -91,7 +106,7 @@ class PositionTable(IDataTable):
             symbol = data.get('symbol')
 
             if not symbol:
-                self.logger.error("缺少symbol字段")
+                self.logger.error("缺少symbol字段，无法保存持仓")
                 return False
 
             position_key = self._get_position_key(symbol, strategy)
@@ -99,8 +114,15 @@ class PositionTable(IDataTable):
             # 设置时间戳
             data['update_time'] = datetime.now().isoformat()
 
-            # 保存持仓
-            self.positions[position_key] = data
+            # 如果持仓量为0，删除该持仓记录（修改处1）
+            volume = data.get('volume', 0)
+            if volume == 0:
+                if position_key in self.positions:
+                    del self.positions[position_key]
+                    self.logger.debug(f"删除零持仓记录: {position_key}")
+            else:
+                # 保存或更新持仓
+                self.positions[position_key] = data
 
             # 记录持仓历史
             self._record_position_history(data)
@@ -158,8 +180,31 @@ class PositionTable(IDataTable):
 
     def update_position(self, strategy: str, symbol: str, direction: str,
                        price: float, volume: int, trade_id: str = None) -> bool:
-        """更新持仓信息"""
+        """更新持仓信息（修复：增强参数验证和错误处理）"""
+        # 修改处2：添加参数类型验证
         try:
+            if not isinstance(strategy, str):
+                self.logger.error(f"strategy参数类型错误: 期望str, 实际{type(strategy)}")
+                return False
+            if not isinstance(symbol, str):
+                self.logger.error(f"symbol参数类型错误: 期望str, 实际{type(symbol)}")
+                return False
+            if not isinstance(direction, str):
+                self.logger.error(f"direction参数类型错误: 期望str, 实际{type(direction)}")
+                return False
+            if not isinstance(price, (int, float)):
+                self.logger.error(f"price参数类型错误: 期望数值, 实际{type(price)}")
+                return False
+            if not isinstance(volume, (int, float)):
+                self.logger.error(f"volume参数类型错误: 期望数值, 实际{type(volume)}")
+                return False
+
+            # 验证方向值
+            valid_directions = ['BUY', 'SELL', 'SHORT', 'COVER']
+            if direction not in valid_directions:
+                self.logger.error(f"无效的direction: {direction}，有效值: {valid_directions}")
+                return False
+
             position_key = self._get_position_key(symbol, strategy)
             current_position = self.positions.get(position_key, {})
 
@@ -180,9 +225,10 @@ class PositionTable(IDataTable):
                         # 反向开仓，平掉原有持仓
                         if volume > current_volume:
                             new_volume = volume - current_volume
+                            new_direction = direction
                         else:
                             new_volume = 0
-                            new_direction = current_direction
+                            new_direction = ''
                 elif direction in ['SELL', 'COVER']:
                     if current_direction == self._get_opposite_direction(direction):
                         new_volume = max(0, current_volume - volume)
@@ -194,8 +240,9 @@ class PositionTable(IDataTable):
             else:
                 if direction in ['BUY', 'SHORT']:
                     new_volume = volume
+                    new_direction = direction
                 else:
-                    self.logger.warning(f"尝试平仓但无持仓: {strategy} {symbol}")
+                    self.logger.warning(f"尝试平仓但无持仓: {strategy} {symbol} {direction}")
                     new_volume = 0
                     new_direction = ''
 
@@ -212,7 +259,13 @@ class PositionTable(IDataTable):
                 'pnl': current_position.get('pnl', 0.0) if current_position else 0.0
             }
 
-            return self.save_data(position_data)
+            # 修改处3：检查保存结果并记录日志
+            success = self.save_data(position_data)
+            if not success:
+                self.logger.error(f"持仓保存失败: {strategy} {symbol} {direction}")
+                return False
+
+            return True
 
         except Exception as e:
             self.logger.error(f"更新持仓异常: {e}")

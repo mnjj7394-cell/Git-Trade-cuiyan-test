@@ -2,6 +2,7 @@
 改进的回测引擎
 修复报告格式和资源释放顺序问题，增加完整的交易接口
 修复版本：解决异步方法返回值不一致问题和方法缺失问题
+修复内容：修正_update_position方法参数传递顺序错误
 """
 import asyncio
 import time
@@ -357,29 +358,31 @@ class BacktestEngine:
         return ""
 
     def _update_position(self, symbol: str, direction: str, price: float, volume: int, trade_id: str):
-        """更新持仓（修复PositionTable接口问题）"""
+        """更新持仓（修复PositionTable接口问题）- 修正参数顺序错误"""
         position_table = self.data_manager.get_table("position")
         if position_table:
             strategy_name = self.strategy.name if self.strategy else "unknown"
             try:
-                # 根据错误信息，PositionTable.update_position需要4个必需参数
+                # 修正处1：修正参数顺序，按照正确的参数顺序传递
+                # 原错误顺序：strategy_name, direction, price, volume, symbol, trade_id
+                # 修正后顺序：strategy_name, symbol, direction, price, volume, trade_id
                 position_table.update_position(
-                    strategy_name,  # 策略名称
-                    direction,  # 方向
-                    price,  # 价格
-                    volume,  # 数量
-                    symbol,  # 可选：标的
-                    trade_id  # 可选：成交ID
+                    strategy_name,  # strategy: str (策略名称)
+                    symbol,         # symbol: str (标的代码)
+                    direction,      # direction: str (交易方向)
+                    price,          # price: float (价格)
+                    volume,         # volume: int (数量)
+                    trade_id        # trade_id: str (成交ID)
                 )
             except TypeError as e:
                 # 如果参数顺序不对，尝试关键字参数
                 try:
                     position_table.update_position(
                         strategy=strategy_name,
+                        symbol=symbol,
                         direction=direction,
                         price=price,
                         volume=volume,
-                        symbol=symbol,
                         trade_id=trade_id
                     )
                 except Exception as e2:
