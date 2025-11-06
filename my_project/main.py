@@ -1,6 +1,6 @@
 """
 改进的主程序
-第四阶段：完整服务集成和监控优化
+集成新数据架构，确保直接可运行
 """
 import asyncio
 import sys
@@ -27,7 +27,7 @@ from strategies.double_ma import DoubleMa
 
 
 class QuantSystem:
-    """量化交易系统主程序（已集成完整服务和监控）"""
+    """量化交易系统主程序（集成新数据架构）"""
 
     def __init__(self, config_file: str = None):
         self.settings = Settings(config_file)
@@ -36,7 +36,13 @@ class QuantSystem:
 
         # 初始化核心组件
         self.event_engine = EventEngine()
-        self.data_manager = DataManager(self.event_engine)
+
+        # 使用新架构的数据管理器
+        self.data_manager = DataManager(
+            event_engine=self.event_engine,
+            config=self._get_data_config()  # 传入统一配置
+        )
+
         self.backtest_engine = BacktestEngine(self.event_engine, self.data_manager)
         self.monitoring_service = MonitoringService()
 
@@ -48,6 +54,46 @@ class QuantSystem:
 
         # 初始化日志
         self._setup_logging()
+
+    def _get_data_config(self) -> Dict[str, Any]:
+        """获取数据模块配置"""
+        return {
+            "tables": {
+                "account": {
+                    "table_name": "account",
+                    "type": "account",
+                    "persistent": True,
+                    "validation_rules": {"required_fields": ["account_id", "balance", "available"]}
+                },
+                "order": {
+                    "table_name": "order",
+                    "type": "order",
+                    "persistent": True,
+                    "validation_rules": {"required_fields": ["order_id", "symbol", "direction", "volume"]}
+                },
+                "position": {
+                    "table_name": "position",
+                    "type": "position",
+                    "persistent": True,
+                    "validation_rules": {"required_fields": ["strategy", "symbol", "direction", "volume"]}
+                },
+                "trade": {
+                    "table_name": "trade",
+                    "type": "trade",
+                    "persistent": True,
+                    "validation_rules": {"required_fields": ["trade_id", "symbol", "direction", "volume"]}
+                }
+            },
+            "adapter": {
+                "default_format": "standard",
+                "auto_convert": True
+            },
+            "sync": {
+                "interval": 5,
+                "auto_repair": True,
+                "validate_on_sync": True
+            }
+        }
 
     def _setup_signal_handlers(self):
         """设置信号处理器"""
@@ -83,7 +129,7 @@ class QuantSystem:
         self.logger.info("日志系统初始化完成")
 
     async def initialize(self) -> bool:
-        """初始化系统（异步版本）"""
+        """初始化系统（增强版本）"""
         try:
             self.logger.info("开始初始化量化交易系统...")
             self.start_time = datetime.now()
@@ -98,9 +144,27 @@ class QuantSystem:
             self.event_engine.start()
             self.logger.info("事件引擎启动完成")
 
-            # 初始化数据管理器
-            await self._initialize_data_manager()
-            self.logger.info("数据管理器初始化完成")
+            # 等待数据管理器完全初始化（修复竞态条件）
+            await asyncio.sleep(0.1)  # 短暂等待确保DataManager完成初始化
+
+            # 增强的状态检查
+            data_status = self.data_manager.get_system_status()
+            self.logger.info(f"数据管理器状态: {data_status}")
+
+            # 更健壮的状态检查
+            if not data_status.get("tables_initialized", False):
+                # 详细记录哪些表未初始化
+                table_details = data_status.get("table_details", {})
+                failed_tables = [
+                    name for name, info in table_details.items()
+                    if not info.get("initialized", False)
+                ]
+
+                if failed_tables:
+                    self.logger.error(f"数据表初始化失败: {failed_tables}")
+                else:
+                    self.logger.error("数据表初始化状态未知")
+                return False
 
             # 连接网关
             await self._connect_gateway()
@@ -121,26 +185,6 @@ class QuantSystem:
         except Exception as e:
             self.logger.error(f"系统初始化失败: {e}")
             return False
-
-    async def _initialize_data_manager(self):
-        """初始化数据管理器"""
-        # 添加数据表
-        from tables.account_table import AccountTable
-        from tables.order_table import OrderTable
-        from tables.position_table import PositionTable
-        from tables.trade_table import TradeTable
-
-        account_table = AccountTable()
-        order_table = OrderTable()
-        position_table = PositionTable()
-        trade_table = TradeTable()
-
-        self.data_manager.add_table("account", account_table)
-        self.data_manager.add_table("order", order_table)
-        self.data_manager.add_table("position", position_table)
-        self.data_manager.add_table("trade", trade_table)
-
-        self.logger.info("数据表初始化完成")
 
     async def _connect_gateway(self):
         """连接网关"""
@@ -181,7 +225,7 @@ class QuantSystem:
         self.logger.info("监控指标注册完成")
 
     async def run_backtest(self, strategy_name: str = None, strategy_config: Dict[str, Any] = None):
-        """运行回测（集成监控）"""
+        """运行回测（集成新数据架构）"""
         if not self.running:
             self.logger.error("系统未运行，无法执行回测")
             return

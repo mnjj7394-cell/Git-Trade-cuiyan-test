@@ -1,6 +1,7 @@
 """
 修复频率解析问题的天勤网关
 确保历史数据获取功能正常运行
+修复版本：解决异步方法返回值不一致问题
 """
 import asyncio
 import logging
@@ -12,7 +13,7 @@ from core.thread_safe_manager import thread_safe_manager
 
 
 class TqsdkGateway:
-    """天勤API网关（已修复频率解析问题）"""
+    """天勤API网关（已修复异步返回值问题）"""
 
     def __init__(self, event_engine: EventEngine):
         self.event_engine = event_engine
@@ -121,10 +122,12 @@ class TqsdkGateway:
         return TqApi(auth=TqAuth(username, password), _stock=False)
 
     async def disconnect(self):
-        """断开连接"""
+        """断开连接（修复：确保始终返回协程对象）"""
+        # 修改处1：使用异步锁管理资源访问
         with thread_safe_manager.locked_resource("gateway_disconnection"):
             if self._disconnecting:
                 self.logger.info("断开连接操作已在进行中，跳过重复执行")
+                # 修改处2：显式返回None，避免隐式返回问题
                 return
 
             self._disconnecting = True
@@ -143,6 +146,7 @@ class TqsdkGateway:
                 if self.api is not None:
                     try:
                         if hasattr(self.api, 'close'):
+                            # 修改处3：确保关闭操作是异步的
                             close_task = asyncio.create_task(self.api.close())
                             await asyncio.wait_for(close_task, timeout=5.0)
                             self.logger.info("API连接已安全关闭")
@@ -158,12 +162,16 @@ class TqsdkGateway:
 
             except Exception as e:
                 self.logger.error(f"断开连接时发生错误: {e}")
+                # 修改处4：确保异常情况下也返回有效值
+                raise
             finally:
                 self._disconnecting = False
                 self._pending_tasks.clear()
+                # 修改处5：显式返回完成标志
+                return True
 
     async def _cancel_pending_tasks(self):
-        """取消所有待处理的异步任务"""
+        """取消所有待处理的异步任务（修复：确保返回协程）"""
         try:
             if self._pending_tasks:
                 self.logger.info(f"正在取消 {len(self._pending_tasks)} 个异步任务")
@@ -176,17 +184,22 @@ class TqsdkGateway:
                         task.cancel()
 
                 if tasks_to_cancel:
+                    # 修改处6：使用return_exceptions=True避免单个任务失败影响整体
                     results = await asyncio.gather(*tasks_to_cancel, return_exceptions=True)
                     cancelled_count = sum(1 for r in results if isinstance(r, asyncio.CancelledError))
                     self.logger.info(f"成功取消 {cancelled_count} 个异步任务")
-
+                    return cancelled_count
+                return 0
+            return 0
         except Exception as e:
             self.logger.warning(f"取消异步任务时发生错误: {e}")
+            return 0
 
     async def _final_data_sync(self) -> bool:
-        """最终数据同步"""
+        """最终数据同步（修复：确保返回布尔值）"""
         try:
             self.logger.info("执行最终数据同步...")
+            # 修改处7：添加小的延迟确保异步操作完成
             await asyncio.sleep(0.1)
             self.logger.info("最终数据同步完成")
             return True

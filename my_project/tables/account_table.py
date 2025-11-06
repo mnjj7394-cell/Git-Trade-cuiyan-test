@@ -1,148 +1,189 @@
 """
-改进的账户表
-融合财务计算逻辑和线程安全保护
+账户表示例实现
+展示如何按照统一接口规范实现具体的数据表
+修复版本：确保数据包含必需字段
 """
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
-from core.thread_safe_manager import thread_safe_manager
+from core.data_table_base import IDataTable
+from core.data_adapter import DataAdapter
+from core.data_sync_service import DataSyncService
+from core.event_engine import EventEngine
+import logging
 
 
-class AccountTable:
-    """账户表（已增强财务计算和线程安全）"""
+class AccountTable(IDataTable):
+    """账户表（修复版本）"""
 
-    def __init__(self):
-        self.data: List[Dict[str, Any]] = []
-        self._current_account: Dict[str, Any] = self._create_initial_account()
+    def initialize(self, adapter: DataAdapter = None, sync_service: DataSyncService = None,
+                  event_engine: EventEngine = None, **kwargs) -> bool:
+        """统一初始化接口"""
+        try:
+            self.adapter = adapter
+            self.sync_service = sync_service
+            self.event_engine = event_engine
 
-    def _create_initial_account(self) -> Dict[str, Any]:
-        """创建初始账户"""
+            # 初始化数据存储
+            self.accounts: Dict[str, Dict[str, Any]] = {}
+            self._transaction_history: List[Dict[str, Any]] = []
+
+            # 创建默认账户
+            self._create_default_account()
+
+            self._initialized = True
+            self.logger.info(f"账户表初始化完成: {self.table_name}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"账户表初始化失败: {e}")
+            return False
+
+    def _create_default_account(self):
+        """创建默认账户"""
+        default_account = {
+            'account_id': 'default',
+            'balance': 1000000.0,
+            'available': 1000000.0,
+            'commission': 0.0,
+            'margin': 0.0,
+            'frozen': 0.0,
+            'update_time': datetime.now().isoformat(),
+            'currency': 'CNY'
+        }
+        self.accounts['default'] = default_account
+
+    def get_table_info(self) -> Dict[str, Any]:
+        """获取表信息"""
         return {
-            "account_id": "default_account",
-            "balance": 1000000.0,  # 初始资金
-            "available": 1000000.0,  # 可用资金
-            "commission": 0.0,  # 手续费
-            "margin": 0.0,  # 保证金
-            "close_profit": 0.0,  # 平仓盈亏
-            "position_profit": 0.0,  # 持仓盈亏
-            "update_time": datetime.now(),
-            "history": []  # 资金变动历史
+            "table_name": self.table_name,
+            "initialized": self._initialized,
+            "account_count": len(self.accounts),
+            "config": self.table_config
         }
 
-    def update(self, account_data: Dict[str, Any]):
-        """更新账户数据（线程安全）"""
-        with thread_safe_manager.locked_resource("account_table"):
-            # 记录历史变更
-            change_record = {
-                "timestamp": datetime.now(),
-                "before": self._current_account.copy(),
-                "after": account_data
-            }
+    def validate_data(self, data: Dict[str, Any]) -> bool:
+        """数据验证"""
+        try:
+            required_fields = self.table_config.get('validation_rules', {}).get('required_fields', [])
+            for field in required_fields:
+                if field not in data:
+                    self.logger.error(f"缺少必需字段: {field}")
+                    return False
 
-            # 更新当前账户
-            self._current_account.update(account_data)
-            self._current_account["update_time"] = datetime.now()
+            # 验证数值类型
+            if 'balance' in data and not isinstance(data['balance'], (int, float)):
+                self.logger.error("balance必须是数值类型")
+                return False
 
-            # 添加到历史记录
-            self._current_account["history"].append(change_record)
+            return True
 
-            # 添加到数据列表
-            self.data.append(self._current_account.copy())
+        except Exception as e:
+            self.logger.error(f"数据验证失败: {e}")
+            return False
 
-    def update_balance(self, amount: float, description: str = ""):
-        """更新资金余额（线程安全）"""
-        with thread_safe_manager.locked_resource("account_balance"):
-            old_balance = self._current_account["balance"]
-            new_balance = old_balance + amount
+    def save_data(self, data: Dict[str, Any]) -> bool:
+        """保存数据（修复：确保包含account_id）"""
+        try:
+            # 修改处1：检查并生成缺失的account_id字段
+            if 'account_id' not in data or not data['account_id']:
+                # 生成基于时间戳的默认account_id
+                data['account_id'] = f"account_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                self.logger.warning(f"自动生成account_id: {data['account_id']}")
+
+            if not self.validate_data(data):
+                return False
+
+            # 使用适配器转换数据
+            if self.adapter:
+                data = self.adapter.adapt_data(self.table_name, data)
+
+            account_id = data.get('account_id')
+            if not account_id:
+                self.logger.error("缺少account_id")
+                return False
+
+            # 保存或更新账户
+            data['update_time'] = datetime.now().isoformat()
+            self.accounts[account_id] = data
+
+            # 记录交易历史
+            self._record_transaction(data)
+
+            self.logger.debug(f"账户数据保存成功: {account_id}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"保存账户数据失败: {e}")
+            return False
+
+    def _record_transaction(self, account_data: Dict[str, Any]):
+        """记录交易历史"""
+        transaction = {
+            'timestamp': datetime.now().isoformat(),
+            'account_id': account_data.get('account_id'),
+            'balance': account_data.get('balance', 0),
+            'available': account_data.get('available', 0),
+            'type': 'update'
+        }
+        self._transaction_history.append(transaction)
+
+    def query_data(self, conditions: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """查询数据"""
+        try:
+            conditions = conditions or {}
+            results = []
+
+            for account_id, account_data in self.accounts.items():
+                if self._match_conditions(account_data, conditions):
+                    results.append(account_data.copy())
+
+            self.logger.debug(f"查询到 {len(results)} 条账户数据")
+            return results
+
+        except Exception as e:
+            self.logger.error(f"查询账户数据失败: {e}")
+            return []
+
+    def _match_conditions(self, data: Dict[str, Any], conditions: Dict[str, Any]) -> bool:
+        """匹配查询条件"""
+        for key, value in conditions.items():
+            if key not in data or data[key] != value:
+                return False
+        return True
+
+    def get_account(self, account_id: str = 'default') -> Optional[Dict[str, Any]]:
+        """获取特定账户信息"""
+        return self.accounts.get(account_id)
+
+    def update_balance(self, account_id: str, amount: float, description: str = "") -> bool:
+        """更新账户余额"""
+        try:
+            if account_id not in self.accounts:
+                self.logger.error(f"账户不存在: {account_id}")
+                return False
+
+            account = self.accounts[account_id]
+            new_balance = account.get('balance', 0) + amount
+
+            if new_balance < 0:
+                self.logger.warning(f"账户余额不足: {account_id}")
+                return False
 
             update_data = {
-                "balance": new_balance,
-                "available": self._current_account["available"] + amount
+                'account_id': account_id,
+                'balance': new_balance,
+                'available': new_balance - account.get('frozen', 0),
+                'update_time': datetime.now().isoformat()
             }
 
-            self.update(update_data)
-            print(f"账户余额更新: {old_balance:.2f} -> {new_balance:.2f} ({description})")
+            return self.save_data(update_data)
 
-    def update_commission(self, commission: float):
-        """更新手续费（线程安全）"""
-        with thread_safe_manager.locked_resource("account_commission"):
-            old_commission = self._current_account["commission"]
-            new_commission = old_commission + commission
+        except Exception as e:
+            self.logger.error(f"更新账户余额失败: {e}")
+            return False
 
-            update_data = {
-                "commission": new_commission,
-                "available": self._current_account["available"] - commission
-            }
-
-            self.update(update_data)
-            print(f"手续费更新: {old_commission:.2f} -> {new_commission:.2f}")
-
-    def update_profit(self, close_profit: float = 0, position_profit: float = 0):
-        """更新盈亏（线程安全）"""
-        with thread_safe_manager.locked_resource("account_profit"):
-            old_close_profit = self._current_account["close_profit"]
-            old_position_profit = self._current_account["position_profit"]
-
-            new_close_profit = old_close_profit + close_profit
-            new_position_profit = old_position_profit + position_profit
-
-            total_profit = close_profit + position_profit
-
-            update_data = {
-                "close_profit": new_close_profit,
-                "position_profit": new_position_profit,
-                "balance": self._current_account["balance"] + total_profit,
-                "available": self._current_account["available"] + total_profit
-            }
-
-            self.update(update_data)
-            print(f"盈亏更新: 平仓盈亏={close_profit:.2f}, 持仓盈亏={position_profit:.2f}")
-
-    def get_account(self) -> Dict[str, Any]:
-        """获取当前账户信息（线程安全）"""
-        with thread_safe_manager.locked_resource("account_table"):
-            return self._current_account.copy()
-
-    def get_history(self) -> List[Dict[str, Any]]:
-        """获取账户变更历史（线程安全）"""
-        with thread_safe_manager.locked_resource("account_table"):
-            return self._current_account["history"].copy()
-
-    def reset(self):
-        """重置账户表（线程安全）"""
-        with thread_safe_manager.locked_resource("account_table"):
-            self.data.clear()
-            self._current_account = self._create_initial_account()
-            print("账户表已重置")
-
-
-# 测试代码
-if __name__ == "__main__":
-    # 创建账户表实例
-    account_table = AccountTable()
-
-    # 测试资金更新
-    account_table.update_balance(50000.0, "初始入金")
-    account_table.update_commission(120.5)
-    account_table.update_profit(close_profit=1500.0, position_profit=800.0)
-
-    # 获取当前账户信息
-    current_account = account_table.get_account()
-    print("当前账户状态:")
-    for key, value in current_account.items():
-        if key != "history":
-            print(f"  {key}: {value}")
-
-    # 测试线程安全
-    import concurrent.futures
-
-
-    def concurrent_update(thread_id):
-        account_table.update_balance(thread_id * 100, f"线程{thread_id}操作")
-
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(concurrent_update, i) for i in range(5)]
-        concurrent.futures.wait(futures)
-
-    final_account = account_table.get_account()
-    print(f"最终余额: {final_account['balance']:.2f}")
+    def get_transaction_history(self, account_id: str = None) -> List[Dict[str, Any]]:
+        """获取交易历史"""
+        if account_id:
+            return [t for t in self._transaction_history if t.get('account_id') == account_id]
+        return self._transaction_history.copy()

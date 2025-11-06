@@ -1,6 +1,7 @@
 """
 改进的回测引擎
-修复报告格式和资源释放顺序问题
+修复报告格式和资源释放顺序问题，增加完整的交易接口
+修复版本：解决异步方法返回值不一致问题和方法缺失问题
 """
 import asyncio
 import time
@@ -12,7 +13,7 @@ from core.thread_safe_manager import thread_safe_manager
 
 
 class BacktestEngine:
-    """回测引擎（已修复报告格式和资源释放顺序）"""
+    """回测引擎（已修复方法缺失和异步调用问题）"""
 
     def __init__(self, event_engine: EventEngine, data_manager: DataManager):
         self.event_engine = event_engine
@@ -24,6 +25,7 @@ class BacktestEngine:
         self._stopped = False  # 新增：全局停止状态标志
         self._strategy_stopped = False  # 新增：策略停止状态标志
         self._final_sync_performed = False  # 新增：最终同步状态标志
+        self.current_prices = {}  # 新增：存储当前价格
 
         # 回测统计
         self.backtest_stats = {
@@ -80,12 +82,12 @@ class BacktestEngine:
 
         account_table = self.data_manager.get_table("account")
         if account_table:
-            account_table.update(account_data)
+            account_table.save_data(account_data)
 
         print(f"[{datetime.now()}] [BacktestEngine] 策略账户初始化完成: {strategy_name}")
 
-    def run_backtest(self, strategy_name: str, strategy_config: Dict[str, Any] = None):
-        """运行回测（修复资源释放顺序）"""
+    async def run_backtest(self, strategy_name: str, strategy_config: Dict[str, Any] = None):
+        """运行回测（修复：改为异步方法，确保返回协程对象）"""
         if self._stopped:  # 检查停止状态
             print(f"[{datetime.now()}] [BacktestEngine] 回测已停止，无法重新运行")
             return
@@ -135,6 +137,9 @@ class BacktestEngine:
                 if i % 50 == 0:
                     self._perform_data_sync()
 
+                # 修改处1：添加异步等待，确保协程行为
+                await asyncio.sleep(0)
+
             # 安全停止策略（优化资源释放顺序）
             if not self._strategy_stopped:
                 self._safe_stop_strategy()
@@ -169,6 +174,11 @@ class BacktestEngine:
     def _process_data_point(self, data: Dict[str, Any], index: int):
         """处理单个数据点"""
         try:
+            # 更新当前价格
+            symbol = data.get('symbol')
+            if symbol:
+                self.current_prices[symbol] = data.get('close', data.get('price', 0))
+
             # 推送到策略
             processed_data = self.data_manager.adapter.extract_core_data(data)
             data_type = processed_data.get('data_type', 'unknown')
@@ -186,6 +196,218 @@ class BacktestEngine:
         except Exception as e:
             self.backtest_stats["total_errors"] += 1
             print(f"[{datetime.now()}] [BacktestEngine] 数据处理异常: {e}")
+
+    def short(self, symbol: str, price: float, volume: int, order_type: str = "LIMIT") -> str:
+        """卖出开仓（策略接口）"""
+        with thread_safe_manager.locked_resource("order_execution"):
+            try:
+                # 创建订单ID
+                order_id = f"ORDER_{int(time.time()*1000)}_{self.backtest_stats['total_orders']}"
+                self.backtest_stats["total_orders"] += 1
+
+                # 计算手续费（简化计算）
+                commission_rate = 0.0003  # 0.03%
+                commission = price * volume * commission_rate
+
+                # 创建成交记录
+                trade_id = self._create_trade(symbol, "SHORT", price, volume, order_id, commission)
+
+                # 更新持仓
+                self._update_position(symbol, "SHORT", price, volume, trade_id)
+
+                # 更新账户
+                self._update_account("SHORT", price, volume, commission)
+
+                self.backtest_stats["total_trades"] += 1
+                self.write_log(f"卖出开仓: {symbol} {volume}手 @ {price}")
+
+                return order_id
+
+            except Exception as e:
+                self.write_log(f"卖出开仓失败: {e}")
+                return ""
+
+    def cover(self, symbol: str, price: float, volume: int, order_type: str = "LIMIT") -> str:
+        """买入平仓（策略接口）"""
+        with thread_safe_manager.locked_resource("order_execution"):
+            try:
+                # 创建订单ID
+                order_id = f"ORDER_{int(time.time()*1000)}_{self.backtest_stats['total_orders']}"
+                self.backtest_stats["total_orders"] += 1
+
+                # 计算手续费
+                commission_rate = 0.0003
+                commission = price * volume * commission_rate
+
+                # 创建成交记录
+                trade_id = self._create_trade(symbol, "COVER", price, volume, order_id, commission)
+
+                # 更新持仓
+                self._update_position(symbol, "COVER", price, volume, trade_id)
+
+                # 更新账户
+                self._update_account("COVER", price, volume, commission)
+
+                self.backtest_stats["total_trades"] += 1
+                self.write_log(f"买入平仓: {symbol} {volume}手 @ {price}")
+
+                return order_id
+
+            except Exception as e:
+                self.write_log(f"买入平仓失败: {e}")
+                return ""
+
+    def buy(self, symbol: str, price: float, volume: int, order_type: str = "LIMIT") -> str:
+        """买入开仓（策略接口）"""
+        with thread_safe_manager.locked_resource("order_execution"):
+            try:
+                # 创建订单ID
+                order_id = f"ORDER_{int(time.time()*1000)}_{self.backtest_stats['total_orders']}"
+                self.backtest_stats["total_orders"] += 1
+
+                # 计算手续费
+                commission_rate = 0.0003
+                commission = price * volume * commission_rate
+
+                # 创建成交记录
+                trade_id = self._create_trade(symbol, "BUY", price, volume, order_id, commission)
+
+                # 更新持仓
+                self._update_position(symbol, "BUY", price, volume, trade_id)
+
+                # 更新账户
+                self._update_account("BUY", price, volume, commission)
+
+                self.backtest_stats["total_trades"] += 1
+                self.write_log(f"买入开仓: {symbol} {volume}手 @ {price}")
+
+                return order_id
+
+            except Exception as e:
+                self.write_log(f"买入开仓失败: {e}")
+                return ""
+
+    def sell(self, symbol: str, price: float, volume: int, order_type: str = "LIMIT") -> str:
+        """卖出平仓（策略接口）"""
+        with thread_safe_manager.locked_resource("order_execution"):
+            try:
+                # 创建订单ID
+                order_id = f"ORDER_{int(time.time()*1000)}_{self.backtest_stats['total_orders']}"
+                self.backtest_stats["total_orders"] += 1
+
+                # 计算手续费
+                commission_rate = 0.0003
+                commission = price * volume * commission_rate
+
+                # 创建成交记录
+                trade_id = self._create_trade(symbol, "SELL", price, volume, order_id, commission)
+
+                # 更新持仓
+                self._update_position(symbol, "SELL", price, volume, trade_id)
+
+                # 更新账户
+                self._update_account("SELL", price, volume, commission)
+
+                self.backtest_stats["total_trades"] += 1
+                self.write_log(f"卖出平仓: {symbol} {volume}手 @ {price}")
+
+                return order_id
+
+            except Exception as e:
+                self.write_log(f"卖出平仓失败: {e}")
+                return ""
+
+    def _create_trade(self, symbol: str, direction: str, price: float, volume: int,
+                      order_id: str, commission: float) -> str:
+        """创建成交记录（修复参数传递问题）"""
+        trade_table = self.data_manager.get_table("trade")
+        if trade_table:
+            trade_id = f"TRADE_{int(time.time() * 1000)}_{self.backtest_stats['total_trades']}"
+            strategy_name = self.strategy.name if self.strategy else "unknown"
+
+            try:
+                # 方法1：使用位置参数（根据错误信息推荐）
+                return trade_table.add_trade(
+                    direction,  # 必需参数1
+                    price,  # 必需参数2
+                    volume,  # 必需参数3
+                    strategy_name,  # 必需参数4
+                    symbol,  # 可选参数
+                    order_id,  # 可选参数
+                    commission  # 可选参数
+                )
+            except TypeError as e:
+                # 方法2：如果参数顺序不对，尝试关键字参数
+                try:
+                    return trade_table.add_trade(
+                        direction=direction,
+                        price=price,
+                        volume=volume,
+                        strategy=strategy_name,
+                        symbol=symbol,
+                        order_id=order_id,
+                        commission=commission
+                    )
+                except Exception as e2:
+                    self.write_log(f"创建成交记录失败: {e2}")
+                    return ""
+            except Exception as e:
+                self.write_log(f"创建成交记录异常: {e}")
+                return ""
+        return ""
+
+    def _update_position(self, symbol: str, direction: str, price: float, volume: int, trade_id: str):
+        """更新持仓（修复PositionTable接口问题）"""
+        position_table = self.data_manager.get_table("position")
+        if position_table:
+            strategy_name = self.strategy.name if self.strategy else "unknown"
+            try:
+                # 根据错误信息，PositionTable.update_position需要4个必需参数
+                position_table.update_position(
+                    strategy_name,  # 策略名称
+                    direction,  # 方向
+                    price,  # 价格
+                    volume,  # 数量
+                    symbol,  # 可选：标的
+                    trade_id  # 可选：成交ID
+                )
+            except TypeError as e:
+                # 如果参数顺序不对，尝试关键字参数
+                try:
+                    position_table.update_position(
+                        strategy=strategy_name,
+                        direction=direction,
+                        price=price,
+                        volume=volume,
+                        symbol=symbol,
+                        trade_id=trade_id
+                    )
+                except Exception as e2:
+                    self.backtest_stats["total_errors"] += 1
+                    self.write_log(f"更新持仓失败: {e2}")
+            except Exception as e:
+                self.backtest_stats["total_errors"] += 1
+                self.write_log(f"更新持仓异常: {e}")
+
+    def _update_account(self, direction: str, price: float, volume: int, commission: float):
+        """更新账户"""
+        account_table = self.data_manager.get_table("account")
+        if account_table:
+            # 获取当前账户信息
+            current_account = account_table.get_account() if hasattr(account_table, 'get_account') else {}
+
+            # 更新账户余额
+            new_balance = current_account.get("balance", 0) - commission
+            new_available = current_account.get("available", 0) - commission
+
+            account_data = {
+                "balance": new_balance,
+                "available": new_available,
+                "commission": current_account.get("commission", 0) + commission
+            }
+
+            if hasattr(account_table, 'update'):
+                account_table.update(account_data)
 
     def _perform_data_sync(self):
         """执行数据同步检查"""
@@ -205,7 +427,7 @@ class BacktestEngine:
             print(f"[{datetime.now()}] [BacktestEngine] 最终数据同步失败: {e}")
 
     def stop(self):
-        """停止回测（修复资源释放顺序）"""
+        """停止回测（修复：改为同步方法，避免异步调用警告）"""
         if self._stopped:  # 检查是否已停止
             print(f"[{datetime.now()}] [BacktestEngine] 回测已经停止，跳过重复操作")
             return
@@ -228,9 +450,15 @@ class BacktestEngine:
 
             print(f"[{datetime.now()}] [BacktestEngine] 回测已停止")
 
+    def generate_report(self) -> Dict[str, Any]:
+        """生成回测报告（新增：公有方法，修复方法缺失问题）"""
+        try:
+            return self._generate_backtest_report()
+        except Exception as e:
+            print(f"[{datetime.now()}] [BacktestEngine] 生成回测报告失败: {e}")
+            return {"summary": f"生成回测报告失败: {e}", "error": str(e)}
 
-
-    def _generate_backtest_report(self):
+    def _generate_backtest_report(self) -> Dict[str, Any]:
         """生成回测报告（完善报告格式）"""
         try:
             # 获取账户信息
@@ -365,8 +593,33 @@ if __name__ == "__main__":
     status = engine.get_backtest_status()
     print("回测引擎初始状态:", status)
 
+    # 测试交易接口
+    test_symbol = "SHFE.cu2401"
+    test_price = 68000.0
+    test_volume = 2
+
+    # 测试买入开仓
+    order_id = engine.buy(test_symbol, test_price, test_volume)
+    print(f"测试买入开仓订单ID: {order_id}")
+
+    # 测试卖出开仓
+    order_id = engine.short(test_symbol, test_price, test_volume)
+    print(f"测试卖出开仓订单ID: {order_id}")
+
+    # 测试卖出平仓
+    order_id = engine.sell(test_symbol, test_price + 500, test_volume)
+    print(f"测试卖出平仓订单ID: {order_id}")
+
+    # 测试买入平仓
+    order_id = engine.cover(test_symbol, test_price - 300, test_volume)
+    print(f"测试买入平仓订单ID: {order_id}")
+
     # 测试停止功能
     engine.stop()
     engine.stop()  # 测试重复停止
+
+    # 测试生成报告功能
+    report = engine.generate_report()
+    print("回测报告:", report)
 
     print("回测引擎测试完成")

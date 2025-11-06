@@ -1,196 +1,211 @@
 """
-改进的订单表
-融合订单状态机和线程安全保护
+订单表统一接口实现
+遵循IDataTable接口规范
 """
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from core.thread_safe_manager import thread_safe_manager
+from core.data_table_base import IDataTable
+from core.data_adapter import DataAdapter
+from core.data_sync_service import DataSyncService
+from core.event_engine import EventEngine
+import logging
 
 
-class OrderTable:
-    """订单表（已增强订单生命周期管理和线程安全）"""
+class OrderTable(IDataTable):
+    """订单表（统一接口实现）"""
 
-    # 订单状态定义（融合第一个架构的状态机）
-    STATUS_NOTTRADED = "未成交"
-    STATUS_PARTTRADED = "部分成交"
-    STATUS_ALLTRADED = "全部成交"
-    STATUS_CANCELLED = "已撤销"
-    STATUS_REJECTED = "已拒绝"
+    def initialize(self, adapter: DataAdapter = None, sync_service: DataSyncService = None,
+                  event_engine: EventEngine = None, **kwargs) -> bool:
+        """统一初始化接口"""
+        try:
+            self.adapter = adapter
+            self.sync_service = sync_service
+            self.event_engine = event_engine
 
-    def __init__(self):
-        self.data: List[Dict[str, Any]] = []
-        self._orders: Dict[str, Dict[str, Any]] = {}  # order_id -> order_data
-        self._next_order_id = 1
+            # 初始化数据存储
+            self.orders: Dict[str, Dict[str, Any]] = {}
+            self._order_history: List[Dict[str, Any]] = []
+            self._order_counter = 0
 
-    def _generate_order_id(self) -> str:
-        """生成唯一订单ID"""
-        order_id = f"ORDER_{self._next_order_id}_{int(datetime.now().timestamp() * 1000)}"
-        self._next_order_id += 1
-        return order_id
-
-    def create_order(self, symbol: str, direction: str, price: float,
-                     volume: int, strategy: str) -> str:
-        """创建新订单（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            order_id = self._generate_order_id()
-
-            order_data = {
-                "order_id": order_id,
-                "symbol": symbol,
-                "direction": direction,  # BUY/SELL/SHORT/COVER
-                "price": price,
-                "volume": volume,
-                "traded_volume": 0,  # 已成交数量
-                "status": self.STATUS_NOTTRADED,
-                "strategy": strategy,
-                "create_time": datetime.now(),
-                "update_time": datetime.now(),
-                "trade_records": []  # 成交记录
-            }
-
-            self._orders[order_id] = order_data
-            self.data.append(order_data.copy())
-
-            print(f"创建订单: {order_id} {direction} {symbol} {volume}手 @ {price}")
-            return order_id
-
-    def update_order_status(self, order_id: str, status: str,
-                            traded_volume: int = 0, trade_data: Dict[str, Any] = None):
-        """更新订单状态（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            if order_id not in self._orders:
-                raise ValueError(f"订单不存在: {order_id}")
-
-            order = self._orders[order_id]
-            old_status = order["status"]
-
-            # 更新订单状态
-            order["status"] = status
-            order["update_time"] = datetime.now()
-
-            if traded_volume > 0:
-                order["traded_volume"] += traded_volume
-
-            if trade_data:
-                order["trade_records"].append(trade_data)
-
-            # 检查订单是否完成
-            if status in [self.STATUS_ALLTRADED, self.STATUS_CANCELLED, self.STATUS_REJECTED]:
-                order["complete_time"] = datetime.now()
-
-            print(f"订单状态更新: {order_id} {old_status} -> {status}")
-
-    def cancel_order(self, order_id: str) -> bool:
-        """撤销订单（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            if order_id not in self._orders:
-                return False
-
-            order = self._orders[order_id]
-            if order["status"] in [self.STATUS_ALLTRADED, self.STATUS_CANCELLED]:
-                return False
-
-            self.update_order_status(order_id, self.STATUS_CANCELLED)
+            self._initialized = True
+            self.logger.info(f"订单表初始化完成: {self.table_name}")
             return True
 
-    def add_trade(self, order_id: str, trade_id: str, price: float,
-                  volume: int, trade_time: datetime = None):
-        """添加成交记录（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            if order_id not in self._orders:
-                raise ValueError(f"订单不存在: {order_id}")
+        except Exception as e:
+            self.logger.error(f"订单表初始化失败: {e}")
+            return False
 
-            order = self._orders[order_id]
-            trade_data = {
-                "trade_id": trade_id,
-                "price": price,
-                "volume": volume,
-                "trade_time": trade_time or datetime.now()
-            }
+    def get_table_info(self) -> Dict[str, Any]:
+        """获取表信息"""
+        return {
+            "table_name": self.table_name,
+            "initialized": self._initialized,
+            "order_count": len(self.orders),
+            "config": self.table_config
+        }
 
-            # 更新订单状态
-            new_traded_volume = order["traded_volume"] + volume
-            total_volume = order["volume"]
+    def validate_data(self, data: Dict[str, Any]) -> bool:
+        """数据验证"""
+        try:
+            required_fields = self.table_config.get('validation_rules', {}).get('required_fields', [])
+            for field in required_fields:
+                if field not in data:
+                    self.logger.error(f"缺少必需字段: {field}")
+                    return False
 
-            if new_traded_volume == 0:
-                status = self.STATUS_NOTTRADED
-            elif new_traded_volume < total_volume:
-                status = self.STATUS_PARTTRADED
+            # 验证数值类型
+            if 'price' in data and not isinstance(data['price'], (int, float)):
+                self.logger.error("price必须是数值类型")
+                return False
+
+            if 'volume' in data and not isinstance(data['volume'], (int, float)):
+                self.logger.error("volume必须是数值类型")
+                return False
+
+            # 验证交易方向
+            valid_directions = ['BUY', 'SELL', 'SHORT', 'COVER']
+            if 'direction' in data and data['direction'] not in valid_directions:
+                self.logger.error(f"无效的交易方向: {data['direction']}")
+                return False
+
+            return True
+
+        except Exception as e:
+            self.logger.error(f"数据验证失败: {e}")
+            return False
+
+    def save_data(self, data: Dict[str, Any]) -> bool:
+        """保存数据"""
+        try:
+            if not self.validate_data(data):
+                return False
+
+            # 使用适配器转换数据
+            if self.adapter:
+                data = self.adapter.adapt_data(self.table_name, data)
+
+            # 生成订单ID（如果未提供）
+            if 'order_id' not in data or not data['order_id']:
+                self._order_counter += 1
+                data['order_id'] = f"ORDER_{self._order_counter:08d}"
+
+            order_id = data['order_id']
+
+            # 设置时间戳
+            if 'order_time' not in data:
+                data['order_time'] = datetime.now().isoformat()
+
+            data['update_time'] = datetime.now().isoformat()
+
+            # 保存订单
+            self.orders[order_id] = data
+
+            # 记录订单历史
+            self._record_order_history(data)
+
+            self.logger.debug(f"订单数据保存成功: {order_id}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"保存订单数据失败: {e}")
+            return False
+
+    def _record_order_history(self, order_data: Dict[str, Any]):
+        """记录订单历史"""
+        history_record = {
+            'timestamp': datetime.now().isoformat(),
+            'order_id': order_data.get('order_id'),
+            'symbol': order_data.get('symbol'),
+            'direction': order_data.get('direction'),
+            'price': order_data.get('price'),
+            'volume': order_data.get('volume'),
+            'status': order_data.get('status', 'pending'),
+            'action': 'created' if order_data.get('order_id') not in self.orders else 'updated'
+        }
+        self._order_history.append(history_record)
+
+    def query_data(self, conditions: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """查询数据"""
+        try:
+            conditions = conditions or {}
+            results = []
+
+            for order_id, order_data in self.orders.items():
+                if self._match_conditions(order_data, conditions):
+                    results.append(order_data.copy())
+
+            self.logger.debug(f"查询到 {len(results)} 条订单数据")
+            return results
+
+        except Exception as e:
+            self.logger.error(f"查询订单数据失败: {e}")
+            return []
+
+    def _match_conditions(self, data: Dict[str, Any], conditions: Dict[str, Any]) -> bool:
+        """匹配查询条件"""
+        for key, value in conditions.items():
+            if key not in data:
+                return False
+            if isinstance(value, (list, tuple)):
+                if data[key] not in value:
+                    return False
             else:
-                status = self.STATUS_ALLTRADED
+                if data[key] != value:
+                    return False
+        return True
 
-            self.update_order_status(order_id, status, volume, trade_data)
+    def create_order(self, symbol: str, direction: str, price: float, volume: int,
+                    strategy: str = "", **kwargs) -> Optional[Dict[str, Any]]:
+        """创建新订单"""
+        order_data = {
+            'symbol': symbol,
+            'direction': direction,
+            'price': price,
+            'volume': volume,
+            'strategy': strategy,
+            'status': 'pending',
+            'order_time': datetime.now().isoformat(),
+            **kwargs
+        }
 
-    def get_order(self, order_id: str) -> Optional[Dict[str, Any]]:
-        """获取订单信息（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            return self._orders.get(order_id, {}).copy()
+        if self.save_data(order_data):
+            return self.orders.get(order_data.get('order_id'))
+        return None
+
+    def update_order_status(self, order_id: str, status: str, **kwargs) -> bool:
+        """更新订单状态"""
+        if order_id not in self.orders:
+            self.logger.error(f"订单不存在: {order_id}")
+            return False
+
+        order_data = self.orders[order_id].copy()
+        order_data['status'] = status
+        order_data.update(kwargs)
+        order_data['update_time'] = datetime.now().isoformat()
+
+        return self.save_data(order_data)
 
     def get_orders_by_strategy(self, strategy: str) -> List[Dict[str, Any]]:
-        """根据策略获取订单列表（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            return [order.copy() for order in self._orders.values()
-                    if order.get("strategy") == strategy]
+        """根据策略获取订单"""
+        return self.query_data({'strategy': strategy})
 
-    def get_active_orders(self) -> List[Dict[str, Any]]:
-        """获取活跃订单（未成交/部分成交）（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            active_statuses = [self.STATUS_NOTTRADED, self.STATUS_PARTTRADED]
-            return [order.copy() for order in self._orders.values()
-                    if order.get("status") in active_statuses]
+    def get_orders_by_symbol(self, symbol: str) -> List[Dict[str, Any]]:
+        """根据标的获取订单"""
+        return self.query_data({'symbol': symbol})
 
-    def get_all_orders(self) -> List[Dict[str, Any]]:
-        """获取所有订单（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            return [order.copy() for order in self._orders.values()]
+    def get_order_history(self, order_id: str = None) -> List[Dict[str, Any]]:
+        """获取订单历史"""
+        if order_id:
+            return [h for h in self._order_history if h.get('order_id') == order_id]
+        return self._order_history.copy()
 
-    def reset(self):
-        """重置订单表（线程安全）"""
-        with thread_safe_manager.locked_resource("order_table"):
-            self.data.clear()
-            self._orders.clear()
-            self._next_order_id = 1
-            print("订单表已重置")
+    def cancel_order(self, order_id: str, reason: str = "") -> bool:
+        """取消订单"""
+        return self.update_order_status(order_id, 'cancelled', cancel_reason=reason)
 
-
-# 测试代码
-if __name__ == "__main__":
-    # 创建订单表实例
-    order_table = OrderTable()
-
-    # 测试创建订单
-    order_id1 = order_table.create_order("SHFE.cu2401", "BUY", 68000.0, 2, "double_ma")
-    order_id2 = order_table.create_order("SHFE.cu2401", "SELL", 68500.0, 1, "double_ma")
-
-    # 测试成交
-    order_table.add_trade(order_id1, "TRADE_001", 67950.0, 1)
-    order_table.add_trade(order_id1, "TRADE_002", 67900.0, 1)
-    order_table.add_trade(order_id2, "TRADE_003", 68450.0, 1)
-
-    # 获取订单信息
-    order1 = order_table.get_order(order_id1)
-    order2 = order_table.get_order(order_id2)
-
-    print("订单1状态:", order1["status"])
-    print("订单2状态:", order2["status"])
-
-    # 测试撤销订单
-    order_id3 = order_table.create_order("SHFE.cu2401", "BUY", 67500.0, 1, "test")
-    order_table.cancel_order(order_id3)
-
-    # 测试线程安全
-    import concurrent.futures
-
-
-    def create_test_order(thread_id):
-        symbol = f"TEST{thread_id}"
-        order_id = order_table.create_order(symbol, "BUY", 100.0, 1, f"thread_{thread_id}")
-        order_table.add_trade(order_id, f"TRADE_T{thread_id}", 99.0, 1)
-
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(create_test_order, i) for i in range(5)]
-        concurrent.futures.wait(futures)
-
-    active_orders = order_table.get_active_orders()
-    print(f"活跃订单数量: {len(active_orders)}")
+    def fill_order(self, order_id: str, fill_price: float, fill_volume: int) -> bool:
+        """成交订单"""
+        return self.update_order_status(order_id, 'filled',
+                                      fill_price=fill_price,
+                                      fill_volume=fill_volume,
+                                      fill_time=datetime.now().isoformat())

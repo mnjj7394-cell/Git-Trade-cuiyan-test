@@ -1,359 +1,192 @@
 """
-改进的数据管理器
-统一管理四个数据表的访问，增强数据一致性验证
+重构的数据管理器
+统一管理所有数据表，提供标准的接口规范
 """
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from core.thread_safe_manager import thread_safe_manager
 from core.data_sync_service import DataSyncService
 from core.data_adapter import DataAdapter
+from core.event_engine import EventEngine
+from core.data_table_base import IDataTable
+import logging
 
-import os
 
 class DataManager:
-    """数据管理器（已增强数据一致性验证）"""
+    """数据管理器（重构版本）"""
 
-    def __init__(self, event_engine):
+    def __init__(self, event_engine: EventEngine, config: Dict[str, Any] = None):
         self.event_engine = event_engine
-        self.tables: Dict[str, Any] = {}
-        self.sync_service = DataSyncService()  # 集成数据同步服务
-        self.adapter = DataAdapter()  # 缺少的adapter属性
+        self.config = config or {}
+        self.tables: Dict[str, IDataTable] = {}
 
-        self._setup_table_validation()
+        # 服务依赖
+        self.sync_service = DataSyncService(self.config.get('sync', {}))
+        self.adapter = DataAdapter(self.config.get('adapter', {}))
 
-    def _setup_table_validation(self):
-        """设置数据表验证规则"""
-        self.validation_rules = {
-            "account": self._validate_account_table,
-            "order": self._validate_order_table,
-            "position": self._validate_position_table,
-            "trade": self._validate_trade_table
+        # 日志设置
+        self.logger = logging.getLogger("DataManager")
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
+
+        # 统一初始化流程
+        self._initialize_tables()
+
+    def _initialize_tables(self):
+        """统一表初始化流程"""
+        self.logger.info("开始初始化核心数据表...")
+
+        # 标准表配置
+        table_configs = {
+            "account": {
+                "table_name": "account",
+                "type": "account",
+                "persistent": True,
+                "validation_rules": {"required_fields": ["account_id", "balance"]}
+            },
+            "order": {
+                "table_name": "order",
+                "type": "order",
+                "persistent": True,
+                "validation_rules": {"required_fields": ["order_id", "symbol", "direction"]}
+            },
+            "position": {
+                "table_name": "position",
+                "type": "position",
+                "persistent": True,
+                "validation_rules": {"required_fields": ["strategy", "symbol", "direction"]}
+            },
+            "trade": {
+                "table_name": "trade",
+                "type": "trade",
+                "persistent": True,
+                "validation_rules": {"required_fields": ["trade_id", "symbol", "volume"]}
+            }
         }
 
-    def add_table(self, table_name: str, table_instance):
-        """添加数据表（线程安全）"""
-        with thread_safe_manager.locked_resource("table_addition"):
-            self.tables[table_name] = table_instance
-            print(f"[{datetime.now()}] [DataManager] 添加数据表: {table_name}")
+        # 合并用户自定义配置
+        user_table_configs = self.config.get('tables', {})
+        for table_name, user_config in user_table_configs.items():
+            if table_name in table_configs:
+                table_configs[table_name].update(user_config)
 
-    def get_table(self, table_name: str) -> Optional[Any]:
-        """获取数据表（线程安全）"""
+        # 创建并初始化表
+        success_count = 0
+        for table_name, config in table_configs.items():
+            table = self._create_table(table_name, config)
+            if table and self._initialize_table(table, table_name):
+                self.tables[table_name] = table
+                success_count += 1
+                self.logger.info(f"数据表 {table_name} 初始化成功")
+            else:
+                self.logger.error(f"数据表 {table_name} 初始化失败")
+
+        self.logger.info(f"数据表初始化完成: {success_count}/{len(table_configs)} 成功")
+
+    def _create_table(self, table_name: str, config: Dict[str, Any]) -> Optional[IDataTable]:
+        """统一表创建工厂方法"""
+        try:
+            if table_name == "account":
+                from tables.account_table import AccountTable
+                return AccountTable(config)
+            elif table_name == "order":
+                from tables.order_table import OrderTable
+                return OrderTable(config)
+            elif table_name == "position":
+                from tables.position_table import PositionTable
+                return PositionTable(config)
+            elif table_name == "trade":
+                from tables.trade_table import TradeTable
+                return TradeTable(config)
+            else:
+                self.logger.error(f"未知的表类型: {table_name}")
+                return None
+
+        except ImportError as e:
+            self.logger.error(f"导入表类失败 {table_name}: {e}")
+            return None
+        except Exception as e:
+            self.logger.error(f"创建表 {table_name} 失败: {e}")
+            return None
+
+    def _initialize_table(self, table: IDataTable, table_name: str) -> bool:
+        """统一表初始化"""
+        try:
+            return table.initialize(
+                adapter=self.adapter,
+                sync_service=self.sync_service,
+                event_engine=self.event_engine
+            )
+        except Exception as e:
+            self.logger.error(f"初始化表 {table_name} 异常: {e}")
+            return False
+
+    def get_table(self, table_name: str) -> Optional[IDataTable]:
+        """获取数据表"""
         with thread_safe_manager.locked_resource("table_query"):
             return self.tables.get(table_name)
 
-    def get_all_tables(self) -> Dict[str, Any]:
-        """获取所有数据表（线程安全）"""
+    def get_all_tables(self) -> Dict[str, IDataTable]:
+        """获取所有数据表"""
         with thread_safe_manager.locked_resource("table_query"):
             return self.tables.copy()
 
-    def remove_table(self, table_name: str):
-        """移除数据表（线程安全）"""
-        with thread_safe_manager.locked_resource("table_removal"):
-            if table_name in self.tables:
-                del self.tables[table_name]
-                print(f"[{datetime.now()}] [DataManager] 移除数据表: {table_name}")
+    def validate_table_data(self, table_name: str, data: Dict[str, Any]) -> bool:
+        """验证表数据"""
+        table = self.get_table(table_name)
+        if not table:
+            self.logger.error(f"表不存在: {table_name}")
+            return False
+        return table.validate_data(data)
 
-    def validate_table_data(self, table_name: str) -> Dict[str, Any]:
-        """验证数据表完整性（线程安全）"""
-        with thread_safe_manager.locked_resource("table_validation"):
-            table = self.tables.get(table_name)
-            if not table:
-                return {"valid": False, "error": f"数据表不存在: {table_name}"}
+    def save_table_data(self, table_name: str, data: Dict[str, Any]) -> bool:
+        """保存表数据"""
+        table = self.get_table(table_name)
+        if not table:
+            self.logger.error(f"表不存在: {table_name}")
+            return False
+        return table.save_data(data)
 
-            validator = self.validation_rules.get(table_name)
-            if not validator:
-                return {"valid": False, "error": f"无验证规则: {table_name}"}
+    def query_table_data(self, table_name: str, conditions: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """查询表数据"""
+        table = self.get_table(table_name)
+        if not table:
+            self.logger.error(f"表不存在: {table_name}")
+            return []
+        return table.query_data(conditions)
 
-            try:
-                return validator(table)
-            except Exception as e:
-                return {"valid": False, "error": f"验证异常: {str(e)}"}
-
-    def validate_all_tables(self) -> Dict[str, Any]:
-        """验证所有数据表（线程安全）"""
-        with thread_safe_manager.locked_resource("all_tables_validation"):
-            results = {}
-            all_valid = True
-
-            for table_name in self.tables:
-                result = self.validate_table_data(table_name)
-                results[table_name] = result
-                if not result.get("valid", False):
-                    all_valid = False
-
-            return {
-                "valid": all_valid,
-                "timestamp": datetime.now(),
-                "results": results,
-                "summary": {
-                    "total_tables": len(self.tables),
-                    "valid_tables": sum(1 for r in results.values() if r.get("valid", False)),
-                    "invalid_tables": sum(1 for r in results.values() if not r.get("valid", False))
-                }
-            }
-
-    def sync_tables(self) -> bool:
-        """同步所有数据表（线程安全）"""
+    def sync_all_tables(self) -> bool:
+        """同步所有数据表"""
         with thread_safe_manager.locked_resource("tables_sync"):
             try:
-                # 获取四个核心数据表
-                account_table = self.tables.get("account")
-                order_table = self.tables.get("order")
-                position_table = self.tables.get("position")
-                trade_table = self.tables.get("trade")
-
-                if not all([account_table, order_table, position_table, trade_table]):
-                    print(f"[{datetime.now()}] [DataManager] 数据表不完整，无法同步")
-                    return False
-
-                # 执行数据同步
-                sync_success = self.sync_service.sync_data_tables(
-                    account_table, order_table, position_table, trade_table
-                )
-
-                if sync_success:
-                    print(f"[{datetime.now()}] [DataManager] 数据表同步成功")
+                success = self.sync_service.sync_all_tables(self.tables)
+                if success:
+                    self.logger.info("所有数据表同步成功")
                 else:
-                    print(f"[{datetime.now()}] [DataManager] 数据表同步发现不一致")
-
-                return sync_success
-
+                    self.logger.warning("数据表同步发现不一致")
+                return success
             except Exception as e:
-                print(f"[{datetime.now()}] [DataManager] 数据表同步失败: {e}")
+                self.logger.error(f"数据表同步失败: {e}")
                 return False
 
-    def backup_tables(self, backup_path: str = None) -> bool:
-        """备份数据表（线程安全）"""
-        with thread_safe_manager.locked_resource("tables_backup"):
-            try:
-                import json
-                import os
-                from datetime import datetime
+    def get_system_status(self) -> Dict[str, Any]:
+        """获取系统状态（修复状态报告）"""
+        with thread_safe_manager.locked_resource("system_status"):
+            # 计算表初始化状态
+            tables_initialized = all(
+                table.is_initialized() if hasattr(table, 'is_initialized') else True
+                for table in self.tables.values()
+            )
 
-                if not backup_path:
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    backup_path = f"data_backup_{timestamp}.json"
-
-                backup_data = {
-                    "backup_time": datetime.now().isoformat(),
-                    "tables": {}
-                }
-
-                # 备份每个表的数据
-                for table_name, table_instance in self.tables.items():
-                    if hasattr(table_instance, 'data'):
-                        backup_data["tables"][table_name] = table_instance.data
-                    elif hasattr(table_instance, 'get_all_data'):
-                        backup_data["tables"][table_name] = table_instance.get_all_data()
-
-                # 写入备份文件
-                with open(backup_path, 'w', encoding='utf-8') as f:
-                    json.dump(backup_data, f, indent=2, ensure_ascii=False, default=str)
-
-                print(f"[{datetime.now()}] [DataManager] 数据表已备份到: {backup_path}")
-                return True
-
-            except Exception as e:
-                print(f"[{datetime.now()}] [DataManager] 数据表备份失败: {e}")
-                return False
-
-    def restore_tables(self, backup_path: str) -> bool:
-        """恢复数据表（线程安全）"""
-        with thread_safe_manager.locked_resource("tables_restore"):
-            try:
-                import json
-
-                if not os.path.exists(backup_path):
-                    print(f"[{datetime.now()}] [DataManager] 备份文件不存在: {backup_path}")
-                    return False
-
-                with open(backup_path, 'r', encoding='utf-8') as f:
-                    backup_data = json.load(f)
-
-                # 恢复每个表的数据
-                for table_name, table_data in backup_data.get("tables", {}).items():
-                    table_instance = self.tables.get(table_name)
-                    if table_instance and hasattr(table_instance, 'restore_data'):
-                        table_instance.restore_data(table_data)
-
-                print(f"[{datetime.now()}] [DataManager] 数据表已从备份恢复: {backup_path}")
-                return True
-
-            except Exception as e:
-                print(f"[{datetime.now()}] [DataManager] 数据表恢复失败: {e}")
-                return False
-
-    def get_table_statistics(self) -> Dict[str, Any]:
-        """获取数据表统计信息（线程安全）"""
-        with thread_safe_manager.locked_resource("table_statistics"):
-            stats = {
+            return {
                 "timestamp": datetime.now(),
+                "tables_initialized": tables_initialized,  # 确保这个字段存在且正确
                 "total_tables": len(self.tables),
-                "table_details": {},
-                "sync_status": self.sync_service.get_sync_status()
+                "initialized_tables": sum(1 for table in self.tables.values()
+                                          if hasattr(table, 'is_initialized') and table.is_initialized()),
+                "table_details": {name: table.get_table_info() for name, table in self.tables.items()}
             }
-
-            for table_name, table_instance in self.tables.items():
-                table_stats = self._get_table_stats(table_instance, table_name)
-                stats["table_details"][table_name] = table_stats
-
-            return stats
-
-    def _get_table_stats(self, table_instance, table_name: str) -> Dict[str, Any]:
-        """获取单个数据表的统计信息"""
-        stats = {"name": table_name, "record_count": 0}
-
-        try:
-            if hasattr(table_instance, 'data') and isinstance(table_instance.data, list):
-                stats["record_count"] = len(table_instance.data)
-            elif hasattr(table_instance, 'get_record_count'):
-                stats["record_count"] = table_instance.get_record_count()
-
-            # 添加表特定统计
-            if table_name == "account":
-                if hasattr(table_instance, 'get_account'):
-                    account_data = table_instance.get_account()
-                    stats["balance"] = account_data.get("balance", 0)
-            elif table_name == "order":
-                if hasattr(table_instance, 'get_active_orders'):
-                    active_orders = table_instance.get_active_orders()
-                    stats["active_orders"] = len(active_orders)
-            elif table_name == "position":
-                if hasattr(table_instance, 'get_all_positions'):
-                    positions = table_instance.get_all_positions()
-                    stats["positions"] = len(positions)
-            elif table_name == "trade":
-                if hasattr(table_instance, 'get_all_trades'):
-                    trades = table_instance.get_all_trades()
-                    stats["trades"] = len(trades)
-
-        except Exception as e:
-            stats["error"] = str(e)
-
-        return stats
-
-    def _validate_account_table(self, account_table) -> Dict[str, Any]:
-        """验证账户表数据完整性"""
-        try:
-            account_data = account_table.get_account()
-            required_fields = ["balance", "available", "commission"]
-
-            for field in required_fields:
-                if field not in account_data:
-                    return {"valid": False, "error": f"缺少必需字段: {field}"}
-
-            # 检查资金逻辑
-            balance = account_data.get("balance", 0)
-            available = account_data.get("available", 0)
-            margin = account_data.get("margin", 0)
-
-            if available > balance:
-                return {"valid": False, "error": "可用资金不能大于总资金"}
-
-            if margin > balance:
-                return {"valid": False, "error": "保证金不能大于总资金"}
-
-            return {"valid": True, "record_count": 1}
-
-        except Exception as e:
-            return {"valid": False, "error": str(e)}
-
-    def _validate_order_table(self, order_table) -> Dict[str, Any]:
-        """验证订单表数据完整性"""
-        try:
-            orders = order_table.get_all_orders()
-
-            for order in orders:
-                required_fields = ["order_id", "symbol", "volume", "status"]
-                for field in required_fields:
-                    if field not in order:
-                        return {"valid": False, "error": f"订单缺少字段: {field}"}
-
-                # 检查成交量逻辑
-                volume = order.get("volume", 0)
-                traded_volume = order.get("traded_volume", 0)
-
-                if traded_volume > volume:
-                    return {"valid": False, "error": "已成交量不能大于订单量"}
-
-            return {"valid": True, "record_count": len(orders)}
-
-        except Exception as e:
-            return {"valid": False, "error": str(e)}
-
-    def _validate_position_table(self, position_table) -> Dict[str, Any]:
-        """验证持仓表数据完整性"""
-        try:
-            positions = position_table.get_all_positions()
-
-            for position in positions:
-                if "symbol" not in position:
-                    return {"valid": False, "error": "持仓缺少品种符号"}
-
-            return {"valid": True, "record_count": len(positions)}
-
-        except Exception as e:
-            return {"valid": False, "error": str(e)}
-
-    def _validate_trade_table(self, trade_table) -> Dict[str, Any]:
-        """验证成交表数据完整性"""
-        try:
-            trades = trade_table.get_all_trades()
-
-            for trade in trades:
-                required_fields = ["trade_id", "symbol", "price", "volume"]
-                for field in required_fields:
-                    if field not in trade:
-                        return {"valid": False, "error": f"成交缺少字段: {field}"}
-
-            return {"valid": True, "record_count": len(trades)}
-
-        except Exception as e:
-            return {"valid": False, "error": str(e)}
-
-    def clear_all_tables(self):
-        """清空所有数据表（线程安全）"""
-        with thread_safe_manager.locked_resource("tables_clear"):
-            for table_name, table_instance in self.tables.items():
-                if hasattr(table_instance, 'clear'):
-                    table_instance.clear()
-                    print(f"[{datetime.now()}] [DataManager] 清空数据表: {table_name}")
-
-
-# 测试代码
-if __name__ == "__main__":
-    from core.event_engine import EventEngine
-
-    # 创建数据管理器实例
-    event_engine = EventEngine()
-    data_manager = DataManager(event_engine)
-
-    # 测试数据表管理
-    class MockTable:
-        def __init__(self, name):
-            self.name = name
-            self.data = []
-
-        def get_all_data(self):
-            return self.data.copy()
-
-        def clear(self):
-            self.data.clear()
-
-    # 添加模拟表
-    data_manager.add_table("account", MockTable("account"))
-    data_manager.add_table("order", MockTable("order"))
-
-    # 测试表验证
-    validation_result = data_manager.validate_all_tables()
-    print("数据表验证结果:", validation_result)
-
-    # 测试数据同步
-    sync_result = data_manager.sync_tables()
-    print("数据同步结果:", sync_result)
-
-    # 测试统计信息
-    stats = data_manager.get_table_statistics()
-    print("数据表统计:", stats)
-
-    print("数据管理器测试完成")
