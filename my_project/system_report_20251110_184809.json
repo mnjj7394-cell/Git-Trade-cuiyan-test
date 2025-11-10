@@ -1,15 +1,15 @@
 {
   "system_info": {
-    "start_time": "2025-11-06T21:17:37.261644",
-    "end_time": "2025-11-06T21:18:36.524067",
-    "uptime_seconds": 59.262423,
+    "start_time": "2025-11-10T18:37:59.815406",
+    "end_time": "2025-11-10T18:48:09.268746",
+    "uptime_seconds": 609.45334,
     "version": "1.0.0"
   },
   "configuration": {
     "tqsdk": {
       "username": "nuyoah",
       "password": "Cy704462@@",
-      "server": "wss://free-openmd.shinnytech.com/t/md/front/mobile",
+      "server": "wss://cn-front.shinnytech.com",
       "timeout": 30,
       "reconnect_interval": 5,
       "max_reconnect_attempts": 10
@@ -91,43 +91,43 @@
     },
     "version": "1.0.0",
     "config_file": null,
-    "timestamp": "2025-11-06T21:18:36.524067"
+    "timestamp": "2025-11-10T18:48:09.268746"
   },
   "performance_metrics": {
     "system_uptime_seconds": {
       "name": "system_uptime_seconds",
       "type": "gauge",
-      "value": 53.680581,
+      "value": 603.326315,
       "description": "系统运行时间",
-      "timestamp": "2025-11-06 21:18:30.942225",
-      "history_size": 1,
+      "timestamp": "2025-11-10 18:48:03.141159",
+      "history_size": 77,
       "labels": {}
     },
     "system_cpu_usage_percent": {
       "name": "system_cpu_usage_percent",
       "type": "gauge",
-      "value": 16.3,
+      "value": 11.5,
       "description": "系统CPU使用率",
-      "timestamp": "2025-11-06 21:18:30.942225",
-      "history_size": 1,
+      "timestamp": "2025-11-10 18:48:03.141159",
+      "history_size": 77,
       "labels": {}
     },
     "system_memory_usage_mb": {
       "name": "system_memory_usage_mb",
       "type": "gauge",
-      "value": 12641.0234375,
+      "value": 12658.3203125,
       "description": "系统内存使用量(MB)",
-      "timestamp": "2025-11-06 21:18:30.942225",
-      "history_size": 1,
+      "timestamp": "2025-11-10 18:48:03.141159",
+      "history_size": 77,
       "labels": {}
     },
     "system_disk_usage_percent": {
       "name": "system_disk_usage_percent",
       "type": "gauge",
-      "value": 19.7,
+      "value": 21.1,
       "description": "系统磁盘使用率",
-      "timestamp": "2025-11-06 21:18:30.942225",
-      "history_size": 1,
+      "timestamp": "2025-11-10 18:48:03.141159",
+      "history_size": 77,
       "labels": {}
     },
     "total_requests": {
@@ -135,7 +135,7 @@
       "type": "counter",
       "value": 0.0,
       "description": "总请求数",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -144,7 +144,7 @@
       "type": "counter",
       "value": 0.0,
       "description": "总错误数",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -153,7 +153,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "活跃连接数",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -162,7 +162,7 @@
       "type": "histogram",
       "value": 0.0,
       "description": "请求处理时间",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -171,7 +171,7 @@
       "type": "counter",
       "value": 0.0,
       "description": "总交易次数",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -180,7 +180,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "当前持仓数",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -189,7 +189,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "账户余额",
-      "timestamp": "2025-11-06 21:17:37.261644",
+      "timestamp": "2025-11-10 18:37:59.814844",
       "history_size": 0,
       "labels": {}
     },
@@ -198,7 +198,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "系统内存使用率",
-      "timestamp": "2025-11-06 21:18:29.912725",
+      "timestamp": "2025-11-10 18:39:05.549328",
       "history_size": 0,
       "labels": {}
     },
@@ -207,7 +207,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "系统CPU使用率",
-      "timestamp": "2025-11-06 21:18:29.912725",
+      "timestamp": "2025-11-10 18:39:05.549328",
       "history_size": 0,
       "labels": {}
     },
@@ -216,7 +216,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "浮动盈亏",
-      "timestamp": "2025-11-06 21:18:29.912725",
+      "timestamp": "2025-11-10 18:39:05.549328",
       "history_size": 0,
       "labels": {}
     },
@@ -225,7 +225,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "事件队列大小",
-      "timestamp": "2025-11-06 21:18:29.912725",
+      "timestamp": "2025-11-10 18:39:05.549328",
       "history_size": 0,
       "labels": {}
     },
@@ -234,7 +234,7 @@
       "type": "gauge",
       "value": 0.0,
       "description": "活跃线程数",
-      "timestamp": "2025-11-06 21:18:29.912725",
+      "timestamp": "2025-11-10 18:39:05.549328",
       "history_size": 0,
       "labels": {}
     },
@@ -243,7 +243,34 @@
       "type": "histogram",
       "value": 0.0,
       "description": "订单处理时间",
-      "timestamp": "2025-11-06 21:18:29.912725",
+      "timestamp": "2025-11-10 18:39:05.549328",
+      "history_size": 0,
+      "labels": {}
+    },
+    "consistency_check_status": {
+      "name": "consistency_check_status",
+      "type": "gauge",
+      "value": 0.0,
+      "description": "一致性检查状态",
+      "timestamp": "2025-11-10 18:39:05.549328",
+      "history_size": 0,
+      "labels": {}
+    },
+    "consistency_checks_total": {
+      "name": "consistency_checks_total",
+      "type": "counter",
+      "value": 0.0,
+      "description": "总一致性检查次数",
+      "timestamp": "2025-11-10 18:39:05.549328",
+      "history_size": 0,
+      "labels": {}
+    },
+    "consistency_violations": {
+      "name": "consistency_violations",
+      "type": "counter",
+      "value": 0.0,
+      "description": "一致性违规次数",
+      "timestamp": "2025-11-10 18:39:05.549328",
       "history_size": 0,
       "labels": {}
     }

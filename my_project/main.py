@@ -1,6 +1,6 @@
 """
 改进的主程序
-集成新数据架构，确保直接可运行
+集成新数据架构和一致性检查，确保直接可运行
 """
 import asyncio
 import sys
@@ -22,12 +22,13 @@ from core.backtest_engine import BacktestEngine
 from core.thread_safe_manager import thread_safe_manager
 from core.data_sync_service import DataSyncService
 from core.monitoring_service import MonitoringService
+from core.consistency_checker import ConsistencyChecker
 from gateways.tqsdk_gateway import TqsdkGateway
 from strategies.double_ma import DoubleMa
 
 
 class QuantSystem:
-    """量化交易系统主程序（集成新数据架构）"""
+    """量化交易系统主程序（集成新数据架构和一致性检查）"""
 
     def __init__(self, config_file: str = None):
         self.settings = Settings(config_file)
@@ -40,7 +41,7 @@ class QuantSystem:
         # 使用新架构的数据管理器
         self.data_manager = DataManager(
             event_engine=self.event_engine,
-            config=self._get_data_config()  # 传入统一配置
+            config=self._get_data_config()
         )
 
         self.backtest_engine = BacktestEngine(self.event_engine, self.data_manager)
@@ -48,6 +49,9 @@ class QuantSystem:
 
         # 初始化网关
         self.gateway = TqsdkGateway(self.event_engine)
+
+        # 一致性检查器实例
+        self.consistency_checker = ConsistencyChecker(self.gateway)
 
         # 信号处理
         self._setup_signal_handlers()
@@ -99,10 +103,10 @@ class QuantSystem:
         """设置信号处理器"""
         def signal_handler(signum, frame):
             print(f"\n[{datetime.now()}] 收到信号 {signum}，正在优雅关闭...")
-            self.stop()
+            asyncio.create_task(self.stop())
 
-        signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
-        signal.signal(signal.SIGTERM, signal_handler)  # 终止信号
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
     def _setup_logging(self):
         """设置日志系统"""
@@ -144,8 +148,8 @@ class QuantSystem:
             self.event_engine.start()
             self.logger.info("事件引擎启动完成")
 
-            # 等待数据管理器完全初始化（修复竞态条件）
-            await asyncio.sleep(0.1)  # 短暂等待确保DataManager完成初始化
+            # 等待数据管理器完全初始化
+            await asyncio.sleep(0.1)
 
             # 增强的状态检查
             data_status = self.data_manager.get_system_status()
@@ -153,7 +157,6 @@ class QuantSystem:
 
             # 更健壮的状态检查
             if not data_status.get("tables_initialized", False):
-                # 详细记录哪些表未初始化
                 table_details = data_status.get("table_details", {})
                 failed_tables = [
                     name for name, info in table_details.items()
@@ -167,8 +170,12 @@ class QuantSystem:
                 return False
 
             # 连接网关
-            await self._connect_gateway()
+            if not await self._connect_gateway():
+                return False
             self.logger.info("网关连接完成")
+
+            # 修改处1：移除初始一致性检查（冗余步骤）
+            # 初始阶段数据为空，一致性检查无实际意义
 
             # 启动监控服务
             await self.monitoring_service.start()
@@ -222,10 +229,15 @@ class QuantSystem:
         self.monitoring_service.register_gauge("active_threads", "活跃线程数")
         self.monitoring_service.register_histogram("order_processing_time", "订单处理时间")
 
+        # 一致性检查指标
+        self.monitoring_service.register_gauge("consistency_check_status", "一致性检查状态")
+        self.monitoring_service.register_counter("consistency_checks_total", "总一致性检查次数")
+        self.monitoring_service.register_counter("consistency_violations", "一致性违规次数")
+
         self.logger.info("监控指标注册完成")
 
     async def run_backtest(self, strategy_name: str = None, strategy_config: Dict[str, Any] = None):
-        """运行回测（集成新数据架构）"""
+        """运行回测（集成新数据架构和一致性检查）"""
         if not self.running:
             self.logger.error("系统未运行，无法执行回测")
             return
@@ -235,6 +247,9 @@ class QuantSystem:
             strategy_config = strategy_config or {}
 
             self.logger.info(f"开始回测策略: {strategy_name}")
+
+            # 修改处2：优化回测前一致性检查，只检查关键数据
+            await self._perform_pre_backtest_consistency_check()
 
             # 获取历史数据
             backtest_config = self.settings.get_backtest_config()
@@ -275,6 +290,9 @@ class QuantSystem:
 
             self.logger.info(f"回测完成，耗时: {duration:.2f}秒")
 
+            # 修改处3：优化回测后一致性检查，专注于账户数据一致性
+            await self._perform_post_backtest_consistency_check()
+
             # 生成回测报告
             report = self.backtest_engine.generate_report()
             self._print_backtest_report(report)
@@ -284,6 +302,64 @@ class QuantSystem:
 
         except Exception as e:
             self.logger.error(f"回测执行失败: {e}")
+
+    async def _perform_pre_backtest_consistency_check(self):
+        """回测前一致性检查"""
+        try:
+            self.logger.info("执行回测前一致性检查...")
+
+            # 修改处4：简化检查内容，只检查账户数据
+            internal_account = self.data_manager.get_table('account').query_data()
+
+            if not internal_account:
+                self.logger.info("回测前无账户数据，跳过一致性检查")
+                return None
+
+            report = await self.consistency_checker.validate_account(
+                internal_account[0] if internal_account else {}
+            )
+
+            self.monitoring_service.increment_counter("consistency_checks_total")
+            if report and report.get('status') != 'consistent':
+                self.monitoring_service.increment_counter("consistency_violations")
+                self.logger.warning("回测前账户数据一致性检查发现问题")
+
+            return report
+        except Exception as e:
+            self.logger.warning(f"回测前一致性检查失败: {e}")
+            return None
+
+    async def _perform_post_backtest_consistency_check(self):
+        """回测后一致性检查"""
+        try:
+            self.logger.info("执行回测后一致性检查...")
+
+            # 修改处5：专注于账户和关键交易数据的一致性
+            internal_account = self.data_manager.get_table('account').query_data()
+            internal_trades = self.data_manager.get_table('trade').query_data()
+
+            if not internal_account:
+                self.logger.warning("回测后无账户数据，无法执行一致性检查")
+                return None
+
+            report = await self.consistency_checker.validate_all(
+                internal_account[0],
+                [],
+                [],
+                internal_trades
+            )
+
+            self.monitoring_service.increment_counter("consistency_checks_total")
+            if report and report.get('overall_status') != 'consistent':
+                self.monitoring_service.increment_counter("consistency_violations")
+                self.logger.warning("回测后数据一致性检查发现问题")
+            else:
+                self.logger.info("回测后数据一致性检查通过")
+
+            return report
+        except Exception as e:
+            self.logger.warning(f"回测后一致性检查失败: {e}")
+            return None
 
     async def _monitor_backtest_progress(self):
         """监控回测进度"""
@@ -296,28 +372,25 @@ class QuantSystem:
                 # 更新性能指标
                 self._update_performance_metrics()
 
-                await asyncio.sleep(5)  # 每5秒更新一次
+                await asyncio.sleep(5)
         except asyncio.CancelledError:
             self.logger.info("回测监控任务已停止")
 
     def _update_performance_metrics(self):
         """更新性能指标"""
         try:
-            # 系统性能
             import psutil
             process = psutil.Process()
-            memory_usage = process.memory_info().rss / 1024 / 1024  # MB
+            memory_usage = process.memory_info().rss / 1024 / 1024
             cpu_usage = process.cpu_percent()
 
             self.monitoring_service.set_gauge("system_memory_usage", memory_usage)
             self.monitoring_service.set_gauge("system_cpu_usage", cpu_usage)
 
-            # 运行时间
             if self.start_time:
                 uptime = (datetime.now() - self.start_time).total_seconds()
                 self.monitoring_service.set_gauge("system_uptime_seconds", uptime)
 
-            # 事件队列状态
             if hasattr(self.event_engine, '_queue'):
                 queue_size = self.event_engine._queue.qsize()
                 self.monitoring_service.set_gauge("event_queue_size", queue_size)
@@ -331,14 +404,12 @@ class QuantSystem:
         print("回测报告摘要")
         print("="*80)
 
-        # 基本信息
         info = report.get('backtest_info', {})
         print(f"策略名称: {info.get('strategy_name', 'N/A')}")
         print(f"回测期间: {info.get('start_date')} 到 {info.get('end_date')}")
         print(f"数据点数: {info.get('data_points', 0)}")
         print(f"回测耗时: {info.get('duration', 0):.2f}秒")
 
-        # 绩效指标
         metrics = report.get('performance_metrics', {})
         print(f"\n绩效指标:")
         print(f"  初始资金: {metrics.get('initial_capital', 0):,.2f}")
@@ -350,7 +421,6 @@ class QuantSystem:
         print(f"  索提诺比率: {metrics.get('sortino_ratio', 0):.2f}")
         print(f"  盈亏比: {metrics.get('profit_factor', 0):.2f}")
 
-        # 交易统计
         stats = report.get('trading_statistics', {})
         print(f"\n交易统计:")
         print(f"  总交易次数: {stats.get('total_trades', 0)}")
@@ -391,6 +461,9 @@ class QuantSystem:
         self.running = False
 
         try:
+            # 修改处6：优化最终一致性检查，专注于账户数据
+            await self._perform_final_consistency_check()
+
             # 停止回测引擎
             if hasattr(self.backtest_engine, 'stop'):
                 self.backtest_engine.stop()
@@ -415,6 +488,33 @@ class QuantSystem:
         except Exception as e:
             self.logger.error(f"系统停止过程中发生错误: {e}")
 
+    async def _perform_final_consistency_check(self):
+        """执行最终一致性检查"""
+        try:
+            self.logger.info("执行最终数据一致性检查...")
+
+            # 修改处7：简化最终检查，只检查关键数据
+            internal_account = self.data_manager.get_table('account').query_data()
+
+            if not internal_account:
+                self.logger.info("无账户数据，跳过最终一致性检查")
+                return None
+
+            report = await self.consistency_checker.validate_account(
+                internal_account[0]
+            )
+
+            if report and report.get('status') == 'consistent':
+                self.logger.info("最终数据一致性检查通过")
+            else:
+                self.logger.warning(f"最终数据一致性检查发现问题: {report}")
+
+            return report
+
+        except Exception as e:
+            self.logger.warning(f"最终一致性检查失败: {e}")
+            return None
+
     def _generate_final_report(self):
         """生成最终系统报告"""
         try:
@@ -429,11 +529,10 @@ class QuantSystem:
                     "version": "1.0.0"
                 },
                 "configuration": self.settings.get_all_config(),
-                "performance_metrics": self.monitoring_service.get_metrics(),
+                "performance_metrics": self.monitoring_service.get_metrics() if self.monitoring_service else {},
                 "final_status": "stopped"
             }
 
-            # 保存系统报告
             report_file = f"system_report_{end_time.strftime('%Y%m%d_%H%M%S')}.json"
             import json
             with open(report_file, 'w', encoding='utf-8') as f:
@@ -454,14 +553,15 @@ class QuantSystem:
                 "data_manager": self.data_manager is not None,
                 "backtest_engine": self.backtest_engine is not None,
                 "gateway": hasattr(self.gateway, 'connected') and self.gateway.connected,
-                "monitoring": self.monitoring_service is not None
+                "monitoring": self.monitoring_service is not None,
+                "consistency_checker": self.consistency_checker is not None
             },
             "metrics": self.monitoring_service.get_metrics() if self.monitoring_service else {}
         }
 
 
 async def main():
-    """主函数"""
+    """主函数（优化流程逻辑）"""
     print("="*60)
     print("量化交易系统启动")
     print("="*60)
@@ -478,9 +578,6 @@ async def main():
 
         # 运行回测
         await system.run_backtest()
-
-        # 保持系统运行（用于实时交易）
-        # await system.run_live_trading()
 
     except KeyboardInterrupt:
         print("\n用户中断，正在关闭系统...")

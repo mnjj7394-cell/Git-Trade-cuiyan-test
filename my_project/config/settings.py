@@ -25,7 +25,11 @@ class Settings:
         self.tqsdk_config = {
             "username": os.getenv("TQSDK_USERNAME", "nuyoah"),
             "password": os.getenv("TQSDK_PASSWORD", "Cy704462@@"),
-            "server": os.getenv("TQSDK_SERVER", "wss://free-openmd.shinnytech.com/t/md/front/mobile"),
+            "server": os.getenv("TQSDK_SERVER", "wss://cn-front.shinnytech.com"),
+            #wss://openmd.shinnytech.com/t/md/front/mobile
+            #wss://free-openmd.shinnytech.com/t/md/front/mobile
+            #wss://cn-front.shinnytech.com/t/md/front/mobile
+            #wss://md.shinnytech.com/t/md/front/mobile
             "timeout": int(os.getenv("TQSDK_TIMEOUT", "30")),
             "reconnect_interval": int(os.getenv("TQSDK_RECONNECT_INTERVAL", "5")),
             "max_reconnect_attempts": int(os.getenv("TQSDK_MAX_RECONNECT", "10"))

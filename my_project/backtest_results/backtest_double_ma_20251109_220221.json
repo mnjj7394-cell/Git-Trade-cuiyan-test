@@ -1,0 +1,79 @@
+{
+  "backtest_info": {
+    "strategy_name": "double_ma",
+    "start_time": "2025-11-09 22:02:21",
+    "end_time": "2025-11-09 22:02:21",
+    "data_points": 200,
+    "progress": 100.0,
+    "duration_seconds": 0.02
+  },
+  "performance_metrics": {
+    "total_trades": 2,
+    "total_orders": 2,
+    "total_errors": 0
+  },
+  "account_summary": {
+    "balance": 999959.29,
+    "available": 999959.29,
+    "commission": 40.71,
+    "margin": 0.0,
+    "close_profit": 0.0,
+    "position_profit": 0.0,
+    "initial_balance": 1000000.0
+  },
+  "trade_statistics": {
+    "total_trades": 2,
+    "trade_records": [
+      {
+        "trade_id": "TRADE_1762696941042_0",
+        "symbol": "SHFE.cu2401",
+        "direction": "SHORT",
+        "price": 67900.0,
+        "volume": 1,
+        "strategy": "double_ma",
+        "order_id": "ORDER_1762696941042_0",
+        "commission": 20.369999999999997,
+        "timestamp": "2025-11-09T22:02:21.042395"
+      },
+      {
+        "trade_id": "TRADE_1762696941054_1",
+        "symbol": "SHFE.cu2401",
+        "direction": "COVER",
+        "price": 67800.0,
+        "volume": 1,
+        "strategy": "double_ma",
+        "order_id": "ORDER_1762696941054_1",
+        "commission": 20.34,
+        "timestamp": "2025-11-09T22:02:21.054198"
+      }
+    ]
+  },
+  "position_statistics": {
+    "total_positions": 2,
+    "position_records": [
+      {
+        "strategy": "double_ma",
+        "symbol": "SHFE.cu2401",
+        "direction": "SHORT",
+        "price": 67900.0,
+        "volume": 1,
+        "trade_id": true,
+        "update_time": "2025-11-09T22:02:21.043574"
+      },
+      {
+        "strategy": "double_ma",
+        "symbol": "SHFE.cu2401",
+        "direction": "COVER",
+        "price": 67800.0,
+        "volume": 1,
+        "trade_id": true,
+        "update_time": "2025-11-09T22:02:21.054734"
+      }
+    ]
+  },
+  "error_statistics": {
+    "total_errors": 0,
+    "error_rate": 0.0
+  },
+  "summary": "回测报告生成完成（使用内部状态确保一致性）"
+}

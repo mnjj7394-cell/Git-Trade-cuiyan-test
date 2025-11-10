@@ -1,7 +1,7 @@
 """
 账户表示例实现
 展示如何按照统一接口规范实现具体的数据表
-修复版本：确保数据包含必需字段
+修复版本：确保数据包含必需字段，并修复数据同步时序问题
 """
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -13,7 +13,7 @@ import logging
 
 
 class AccountTable(IDataTable):
-    """账户表（修复版本）"""
+    """账户表（修复版本：解决数据同步时序问题）"""
 
     def initialize(self, adapter: DataAdapter = None, sync_service: DataSyncService = None,
                   event_engine: EventEngine = None, **kwargs) -> bool:
@@ -82,11 +82,10 @@ class AccountTable(IDataTable):
             return False
 
     def save_data(self, data: Dict[str, Any]) -> bool:
-        """保存数据（修复：确保包含account_id）"""
+        """保存数据（修复：添加数据同步调用，解决时序问题）"""
         try:
             # 修改处1：检查并生成缺失的account_id字段
             if 'account_id' not in data or not data['account_id']:
-                # 生成基于时间戳的默认account_id
                 data['account_id'] = f"account_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 self.logger.warning(f"自动生成account_id: {data['account_id']}")
 
@@ -105,6 +104,14 @@ class AccountTable(IDataTable):
             # 保存或更新账户
             data['update_time'] = datetime.now().isoformat()
             self.accounts[account_id] = data
+
+            # 修改处2：添加数据同步调用，确保外部数据表更新
+            if self.sync_service:
+                # 同步数据到外部存储
+                sync_success = self.sync_service.sync_data(self.table_name, data)
+                if not sync_success:
+                    self.logger.warning(f"数据同步失败: {account_id}")
+                    # 可以添加重试逻辑或回滚机制
 
             # 记录交易历史
             self._record_transaction(data)
@@ -156,7 +163,7 @@ class AccountTable(IDataTable):
         return self.accounts.get(account_id)
 
     def update_balance(self, account_id: str, amount: float, description: str = "") -> bool:
-        """更新账户余额"""
+        """更新账户余额（修复：确保数据同步）"""
         try:
             if account_id not in self.accounts:
                 self.logger.error(f"账户不存在: {account_id}")
@@ -176,6 +183,7 @@ class AccountTable(IDataTable):
                 'update_time': datetime.now().isoformat()
             }
 
+            # 修改处3：使用save_data方法确保数据同步
             return self.save_data(update_data)
 
         except Exception as e:
@@ -187,3 +195,32 @@ class AccountTable(IDataTable):
         if account_id:
             return [t for t in self._transaction_history if t.get('account_id') == account_id]
         return self._transaction_history.copy()
+
+    def sync_with_external(self) -> bool:
+        """与外部数据源同步（新增：解决数据一致性检查失败问题）"""
+        try:
+            if not self.sync_service:
+                self.logger.warning("同步服务未初始化")
+                return False
+
+            # 获取所有账户数据
+            all_accounts = list(self.accounts.values())
+
+            # 批量同步数据
+            sync_results = []
+            for account_data in all_accounts:
+                result = self.sync_service.sync_data(self.table_name, account_data)
+                sync_results.append(result)
+
+            # 检查同步结果
+            success_count = sum(1 for result in sync_results if result)
+            if success_count == len(all_accounts):
+                self.logger.info(f"数据同步完成: {success_count}/{len(all_accounts)} 成功")
+                return True
+            else:
+                self.logger.warning(f"数据同步部分失败: {success_count}/{len(all_accounts)} 成功")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"数据同步异常: {e}")
+            return False
